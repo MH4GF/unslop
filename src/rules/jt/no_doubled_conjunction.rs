@@ -27,28 +27,28 @@ impl Rule for NoDoubledConjunction {
                     if t.pos != "接続詞" {
                         return false;
                     }
-                    if let Some(prev) = i.checked_sub(1).and_then(|j| tokens.get(j)) {
-                        if prev.pos_detail_1 == "空白" {
-                            return false;
-                        }
+                    if let Some(prev) = i.checked_sub(1).and_then(|j| tokens.get(j))
+                        && prev.pos_detail_1 == "空白"
+                    {
+                        return false;
                     }
                     true
                 });
                 if let Some((_, conj)) = first_conj {
-                    if let Some(prev) = &prev_conjunction {
-                        if prev == &conj.surface {
-                            let (line, column) = doc.pos_at(seg, s_start + conj.byte_start);
-                            issues.push(Issue {
-                                rule_id: RULE_ID.to_string(),
-                                message: format!(
-                                    "同じ接続詞（{}）が連続して使われています。",
-                                    conj.surface
-                                ),
-                                line,
-                                column,
-                                severity: Severity::Error,
-                            });
-                        }
+                    if let Some(prev) = &prev_conjunction
+                        && prev == &conj.surface
+                    {
+                        let (line, column) = doc.pos_at(seg, s_start + conj.byte_start);
+                        issues.push(Issue {
+                            rule_id: RULE_ID.to_string(),
+                            message: format!(
+                                "同じ接続詞（{}）が連続して使われています。",
+                                conj.surface
+                            ),
+                            line,
+                            column,
+                            severity: Severity::Error,
+                        });
                     }
                     prev_conjunction = Some(conj.surface.clone());
                 }

@@ -35,16 +35,20 @@ impl TextlintRc {
         };
         match v {
             serde_json::Value::Bool(b) => *b,
-            serde_json::Value::Object(obj) => match obj.get(child) {
-                Some(serde_json::Value::Bool(false)) => false,
-                _ => true,
-            },
+            serde_json::Value::Object(obj) => {
+                !matches!(obj.get(child), Some(serde_json::Value::Bool(false)))
+            }
             _ => true,
         }
     }
 
     /// preset 配下の child rule の option value を取り出す。
-    pub fn preset_child_option(&self, preset: &str, child: &str, key: &str) -> Option<&serde_json::Value> {
+    pub fn preset_child_option(
+        &self,
+        preset: &str,
+        child: &str,
+        key: &str,
+    ) -> Option<&serde_json::Value> {
         let preset_v = self.rules.get(preset)?;
         let obj = preset_v.as_object()?;
         let child_v = obj.get(child)?;
@@ -65,11 +69,7 @@ impl TextlintRc {
             .filter_map(|v| v.as_str())
             .map(|s| {
                 let p = PathBuf::from(s);
-                if p.is_absolute() {
-                    p
-                } else {
-                    base_dir.join(p)
-                }
+                if p.is_absolute() { p } else { base_dir.join(p) }
             })
             .collect()
     }

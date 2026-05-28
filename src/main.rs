@@ -7,7 +7,10 @@ use unslop::config::TextlintRc;
 use unslop::rule::Severity;
 
 #[derive(Parser, Debug)]
-#[command(name = "unslop", about = "Fast textlint-compatible Japanese writing linter")]
+#[command(
+    name = "unslop",
+    about = "Fast textlint-compatible Japanese writing linter"
+)]
 struct Cli {
     #[arg(short = 'c', long = "config")]
     config: Option<PathBuf>,
@@ -20,7 +23,9 @@ struct Cli {
 
 fn main() -> ExitCode {
     let cli = Cli::parse();
-    let config_path = cli.config.unwrap_or_else(|| PathBuf::from(".textlintrc.json"));
+    let config_path = cli
+        .config
+        .unwrap_or_else(|| PathBuf::from(".textlintrc.json"));
     let base_dir = config_path
         .parent()
         .map(|p| p.to_path_buf())
@@ -68,5 +73,9 @@ fn main() -> ExitCode {
         }
     }
 
-    if had_error { ExitCode::from(1) } else { ExitCode::from(0) }
+    if had_error {
+        ExitCode::from(1)
+    } else {
+        ExitCode::from(0)
+    }
 }

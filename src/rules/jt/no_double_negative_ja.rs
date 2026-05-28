@@ -22,30 +22,30 @@ struct Spec {
 }
 
 fn matches_spec(t: &Token, s: &Spec) -> bool {
-    if let Some(v) = s.surface {
-        if !v.contains(&t.surface.as_str()) {
-            return false;
-        }
+    if let Some(v) = s.surface
+        && !v.contains(&t.surface.as_str())
+    {
+        return false;
     }
-    if let Some(v) = s.base {
-        if !v.contains(&t.base_form.as_str()) {
-            return false;
-        }
+    if let Some(v) = s.base
+        && !v.contains(&t.base_form.as_str())
+    {
+        return false;
     }
-    if let Some(v) = s.pos {
-        if !v.contains(&t.pos.as_str()) {
-            return false;
-        }
+    if let Some(v) = s.pos
+        && !v.contains(&t.pos.as_str())
+    {
+        return false;
     }
-    if let Some(v) = s.reading {
-        if !v.contains(&t.reading.as_str()) {
-            return false;
-        }
+    if let Some(v) = s.reading
+        && !v.contains(&t.reading.as_str())
+    {
+        return false;
     }
-    if let Some(v) = s.conjugated_form {
-        if !v.contains(&t.conjugated_form.as_str()) {
-            return false;
-        }
+    if let Some(v) = s.conjugated_form
+        && !v.contains(&t.conjugated_form.as_str())
+    {
+        return false;
     }
     true
 }
@@ -65,73 +65,189 @@ fn patterns() -> Vec<Pattern> {
         Pattern {
             message: "二重否定: 〜なくもない",
             specs: vec![
-                Spec { base: Some(NAI), ..Spec_const() },
-                Spec { surface: Some(&["も"]), pos: Some(JOSHI), ..Spec_const() },
-                Spec { base: Some(NAI), pos: Some(KEIYO), ..Spec_const() },
+                Spec {
+                    base: Some(NAI),
+                    ..Spec_const()
+                },
+                Spec {
+                    surface: Some(&["も"]),
+                    pos: Some(JOSHI),
+                    ..Spec_const()
+                },
+                Spec {
+                    base: Some(NAI),
+                    pos: Some(KEIYO),
+                    ..Spec_const()
+                },
             ],
         },
         Pattern {
             message: "二重否定: 〜なくはない",
             specs: vec![
-                Spec { base: Some(NAI), ..Spec_const() },
-                Spec { surface: Some(&["は"]), pos: Some(JOSHI), ..Spec_const() },
-                Spec { base: Some(NAI), pos: Some(KEIYO), ..Spec_const() },
+                Spec {
+                    base: Some(NAI),
+                    ..Spec_const()
+                },
+                Spec {
+                    surface: Some(&["は"]),
+                    pos: Some(JOSHI),
+                    ..Spec_const()
+                },
+                Spec {
+                    base: Some(NAI),
+                    pos: Some(KEIYO),
+                    ..Spec_const()
+                },
             ],
         },
         Pattern {
             message: "二重否定: 〜ないでもない",
             specs: vec![
-                Spec { base: Some(NAI), ..Spec_const() },
-                Spec { surface: Some(&["で"]), conjugated_form: Some(&["連用形"]), ..Spec_const() },
-                Spec { surface: Some(&["も"]), pos: Some(JOSHI), ..Spec_const() },
-                Spec { base: Some(NAI), pos: Some(KEIYO), ..Spec_const() },
+                Spec {
+                    base: Some(NAI),
+                    ..Spec_const()
+                },
+                Spec {
+                    surface: Some(&["で"]),
+                    conjugated_form: Some(&["連用形"]),
+                    ..Spec_const()
+                },
+                Spec {
+                    surface: Some(&["も"]),
+                    pos: Some(JOSHI),
+                    ..Spec_const()
+                },
+                Spec {
+                    base: Some(NAI),
+                    pos: Some(KEIYO),
+                    ..Spec_const()
+                },
             ],
         },
         Pattern {
             message: "二重否定: 〜ないではない",
             specs: vec![
-                Spec { base: Some(NAI), ..Spec_const() },
-                Spec { surface: Some(&["で"]), pos: Some(JOSHI), ..Spec_const() },
-                Spec { surface: Some(&["は"]), pos: Some(JOSHI), ..Spec_const() },
-                Spec { base: Some(NAI), pos: Some(KEIYO), ..Spec_const() },
+                Spec {
+                    base: Some(NAI),
+                    ..Spec_const()
+                },
+                Spec {
+                    surface: Some(&["で"]),
+                    pos: Some(JOSHI),
+                    ..Spec_const()
+                },
+                Spec {
+                    surface: Some(&["は"]),
+                    pos: Some(JOSHI),
+                    ..Spec_const()
+                },
+                Spec {
+                    base: Some(NAI),
+                    pos: Some(KEIYO),
+                    ..Spec_const()
+                },
             ],
         },
         Pattern {
             message: "二重否定: 〜ないことはない",
             specs: vec![
-                Spec { base: Some(NAI), ..Spec_const() },
-                Spec { reading: Some(&["コト"]), pos: Some(MEISHI), ..Spec_const() },
-                Spec { surface: Some(&["は"]), pos: Some(JOSHI), ..Spec_const() },
-                Spec { base: Some(NAI), ..Spec_const() },
+                Spec {
+                    base: Some(NAI),
+                    ..Spec_const()
+                },
+                Spec {
+                    reading: Some(&["コト"]),
+                    pos: Some(MEISHI),
+                    ..Spec_const()
+                },
+                Spec {
+                    surface: Some(&["は"]),
+                    pos: Some(JOSHI),
+                    ..Spec_const()
+                },
+                Spec {
+                    base: Some(NAI),
+                    ..Spec_const()
+                },
             ],
         },
         Pattern {
             message: "二重否定: 〜ないこともない",
             specs: vec![
-                Spec { base: Some(NAI), ..Spec_const() },
-                Spec { reading: Some(&["コト"]), pos: Some(MEISHI), ..Spec_const() },
-                Spec { surface: Some(&["も"]), pos: Some(JOSHI), ..Spec_const() },
-                Spec { base: Some(NAI), ..Spec_const() },
+                Spec {
+                    base: Some(NAI),
+                    ..Spec_const()
+                },
+                Spec {
+                    reading: Some(&["コト"]),
+                    pos: Some(MEISHI),
+                    ..Spec_const()
+                },
+                Spec {
+                    surface: Some(&["も"]),
+                    pos: Some(JOSHI),
+                    ..Spec_const()
+                },
+                Spec {
+                    base: Some(NAI),
+                    ..Spec_const()
+                },
             ],
         },
         Pattern {
             message: "二重否定: 〜ないわけではない",
             specs: vec![
-                Spec { base: Some(NAI), ..Spec_const() },
-                Spec { reading: Some(&["ワケ"]), pos: Some(MEISHI), ..Spec_const() },
-                Spec { surface: Some(&["で"]), pos: Some(JOSHI), ..Spec_const() },
-                Spec { surface: Some(&["は"]), pos: Some(JOSHI), ..Spec_const() },
-                Spec { base: Some(NAI), pos: Some(KEIYO), ..Spec_const() },
+                Spec {
+                    base: Some(NAI),
+                    ..Spec_const()
+                },
+                Spec {
+                    reading: Some(&["ワケ"]),
+                    pos: Some(MEISHI),
+                    ..Spec_const()
+                },
+                Spec {
+                    surface: Some(&["で"]),
+                    pos: Some(JOSHI),
+                    ..Spec_const()
+                },
+                Spec {
+                    surface: Some(&["は"]),
+                    pos: Some(JOSHI),
+                    ..Spec_const()
+                },
+                Spec {
+                    base: Some(NAI),
+                    pos: Some(KEIYO),
+                    ..Spec_const()
+                },
             ],
         },
         Pattern {
             message: "二重否定: 〜ないとはかぎらない",
             specs: vec![
-                Spec { base: Some(NAI), ..Spec_const() },
-                Spec { surface: Some(&["と"]), pos: Some(JOSHI), ..Spec_const() },
-                Spec { surface: Some(&["は"]), pos: Some(JOSHI), ..Spec_const() },
-                Spec { reading: Some(&["カギラ"]), ..Spec_const() },
-                Spec { base: Some(NAI), ..Spec_const() },
+                Spec {
+                    base: Some(NAI),
+                    ..Spec_const()
+                },
+                Spec {
+                    surface: Some(&["と"]),
+                    pos: Some(JOSHI),
+                    ..Spec_const()
+                },
+                Spec {
+                    surface: Some(&["は"]),
+                    pos: Some(JOSHI),
+                    ..Spec_const()
+                },
+                Spec {
+                    reading: Some(&["カギラ"]),
+                    ..Spec_const()
+                },
+                Spec {
+                    base: Some(NAI),
+                    ..Spec_const()
+                },
             ],
         },
     ]

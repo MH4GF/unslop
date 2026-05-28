@@ -41,10 +41,7 @@ impl Rule for JaUnnaturalAlphabet {
                     let (line, column) = doc.pos_at(seg, alpha_start);
                     issues.push(Issue {
                         rule_id: RULE_ID.to_string(),
-                        message: format!(
-                            "不自然なアルファベットがあります: \"{}\"",
-                            full.as_str()
-                        ),
+                        message: format!("不自然なアルファベットがあります: \"{}\"", full.as_str()),
                         line,
                         column,
                         severity: Severity::Error,

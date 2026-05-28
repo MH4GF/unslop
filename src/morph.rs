@@ -7,8 +7,8 @@ use lindera::tokenizer::Tokenizer;
 use once_cell::sync::Lazy;
 
 static TOKENIZER: Lazy<Tokenizer> = Lazy::new(|| {
-    let dict = load_dictionary("embedded://ipadic")
-        .expect("failed to load embedded IPADIC dictionary");
+    let dict =
+        load_dictionary("embedded://ipadic").expect("failed to load embedded IPADIC dictionary");
     let segmenter = Segmenter::new(Mode::Normal, dict, None);
     Tokenizer::new(segmenter)
 });
@@ -35,7 +35,7 @@ pub fn tokenize(text: &str) -> Vec<Token> {
     let mut out = Vec::with_capacity(raw.len());
     for token in raw.iter_mut() {
         let details = token.details();
-        let pos = details.get(0).map(|s| s.to_string()).unwrap_or_default();
+        let pos = details.first().map(|s| s.to_string()).unwrap_or_default();
         let p1 = details.get(1).map(|s| s.to_string()).unwrap_or_default();
         let p2 = details.get(2).map(|s| s.to_string()).unwrap_or_default();
         let p3 = details.get(3).map(|s| s.to_string()).unwrap_or_default();

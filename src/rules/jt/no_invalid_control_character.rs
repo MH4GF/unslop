@@ -11,10 +11,7 @@ const RULE_ID: &str = "no-invalid-control-character";
 
 // upstream と同じ集合: ASCII control (\t \r \n 除く) + C1 control + BiDi format
 static PATTERN: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(
-        r"([\x00-\x08\x0B\x0C\x0E-\x1F\x7F\u{0080}-\u{009F}\u{202A}-\u{202E}])",
-    )
-    .unwrap()
+    Regex::new(r"([\x00-\x08\x0B\x0C\x0E-\x1F\x7F\u{0080}-\u{009F}\u{202A}-\u{202E}])").unwrap()
 });
 
 const NAMES: &[(char, &str)] = &[

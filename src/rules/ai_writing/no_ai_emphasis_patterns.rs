@@ -17,8 +17,24 @@ use crate::rule::{Issue, Rule, Severity};
 const RULE_ID: &str = "@textlint-ja/preset-ai-writing/no-ai-emphasis-patterns";
 
 const INFO_PATTERNS: &[&str] = &[
-    "注意", "重要", "ポイント", "メモ", "参考", "補足", "確認", "チェック", "推奨", "おすすめ",
-    "検出される例", "推奨される表現", "良い例", "悪い例", "例", "サンプル", "使用例", "設定例",
+    "注意",
+    "重要",
+    "ポイント",
+    "メモ",
+    "参考",
+    "補足",
+    "確認",
+    "チェック",
+    "推奨",
+    "おすすめ",
+    "検出される例",
+    "推奨される表現",
+    "良い例",
+    "悪い例",
+    "例",
+    "サンプル",
+    "使用例",
+    "設定例",
 ];
 
 // 絵文字 + 任意空白 + **text**
@@ -35,8 +51,7 @@ static INFO_PREFIX: Lazy<Regex> = Lazy::new(|| {
 });
 
 // 見出し内 (**X** or __X__)
-static HEADING_EMPHASIS: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(\*\*|__)(.*?)\1").unwrap());
+static HEADING_EMPHASIS: Lazy<Regex> = Lazy::new(|| Regex::new(r"(\*\*|__)(.*?)\1").unwrap());
 
 pub struct NoAiEmphasisPatterns;
 

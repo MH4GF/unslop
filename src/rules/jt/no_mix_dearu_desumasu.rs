@@ -35,8 +35,14 @@ impl Rule for NoMixDearuDesumasu {
             }
         }
 
-        let desumasu_count = classified.iter().filter(|(_, s)| *s == Style::Desumasu).count();
-        let dearu_count = classified.iter().filter(|(_, s)| *s == Style::Dearu).count();
+        let desumasu_count = classified
+            .iter()
+            .filter(|(_, s)| *s == Style::Desumasu)
+            .count();
+        let dearu_count = classified
+            .iter()
+            .filter(|(_, s)| *s == Style::Dearu)
+            .count();
         if desumasu_count == 0 || dearu_count == 0 {
             return Vec::new();
         }

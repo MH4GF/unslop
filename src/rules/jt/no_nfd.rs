@@ -30,21 +30,22 @@ impl Rule for NoNfd {
             // text を char_indices で歩き、前文字を保持しながら target を検出。
             let mut prev: Option<(usize, char)> = None;
             for (i, c) in seg.text.char_indices() {
-                if is_target(c) {
-                    if let Some((pi, _pc)) = prev {
-                        let pair = &seg.text[pi..i + c.len_utf8()];
-                        // upstream の文字置換: ゛ → ゙, ゜ → ゚
-                        let normalized_pair: String = pair
-                            .chars()
-                            .map(|c| match c {
-                                '\u{309B}' => '\u{3099}',
-                                '\u{309C}' => '\u{309A}',
-                                other => other,
-                            })
-                            .collect();
-                        let nfc: String = normalized_pair.nfc().collect();
-                        let (line, column) = doc.pos_at(seg, i);
-                        issues.push(Issue {
+                if is_target(c)
+                    && let Some((pi, _pc)) = prev
+                {
+                    let pair = &seg.text[pi..i + c.len_utf8()];
+                    // upstream の文字置換: ゛ → ゙, ゜ → ゚
+                    let normalized_pair: String = pair
+                        .chars()
+                        .map(|c| match c {
+                            '\u{309B}' => '\u{3099}',
+                            '\u{309C}' => '\u{309A}',
+                            other => other,
+                        })
+                        .collect();
+                    let nfc: String = normalized_pair.nfc().collect();
+                    let (line, column) = doc.pos_at(seg, i);
+                    issues.push(Issue {
                             rule_id: RULE_ID.to_string(),
                             message: format!(
                                 "Disallow to use NFD(well-known as UTF8-MAC 濁点): \"{pair}\" => \"{nfc}\""
@@ -53,7 +54,6 @@ impl Rule for NoNfd {
                             column,
                             severity: Severity::Error,
                         });
-                    }
                 }
                 prev = Some((i, c));
             }

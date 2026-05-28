@@ -2,5 +2,6 @@
 .claude/tmp/
 node_modules/
 tests/upstream/
+tests/golden/expected/*.textlint.raw
 bench/configs/
 bench/results/*.tsv

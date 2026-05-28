@@ -50,10 +50,7 @@ impl Rule for NoAiColonContinuation {
                 Some(t) => t,
                 None => continue,
             };
-            let problematic = matches!(
-                last.pos.as_str(),
-                "動詞" | "形容詞" | "助動詞" | "接続詞"
-            );
+            let problematic = matches!(last.pos.as_str(), "動詞" | "形容詞" | "助動詞" | "接続詞");
             if !problematic {
                 continue;
             }

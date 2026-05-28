@@ -13,10 +13,7 @@ use crate::rule::{Issue, Rule};
 pub fn build_rules(rc: &TextlintRc, base_dir: &Path) -> Vec<Box<dyn Rule>> {
     let mut out: Vec<Box<dyn Rule>> = Vec::new();
 
-    if rc.preset_child_enabled(
-        "@textlint-ja/preset-ai-writing",
-        "no-ai-emphasis-patterns",
-    ) {
+    if rc.preset_child_enabled("@textlint-ja/preset-ai-writing", "no-ai-emphasis-patterns") {
         out.push(Box::new(
             rules::ai_writing::no_ai_emphasis_patterns::NoAiEmphasisPatterns,
         ));
@@ -31,7 +28,10 @@ pub fn build_rules(rc: &TextlintRc, base_dir: &Path) -> Vec<Box<dyn Rule>> {
             rules::ai_writing::no_ai_list_formatting::NoAiListFormatting,
         ));
     }
-    if rc.preset_child_enabled("@textlint-ja/preset-ai-writing", "ai-tech-writing-guideline") {
+    if rc.preset_child_enabled(
+        "@textlint-ja/preset-ai-writing",
+        "ai-tech-writing-guideline",
+    ) {
         out.push(Box::new(
             rules::ai_writing::ai_tech_writing_guideline::AiTechWritingGuideline,
         ));
@@ -75,30 +75,44 @@ pub fn build_rules(rc: &TextlintRc, base_dir: &Path) -> Vec<Box<dyn Rule>> {
     if rc.preset_child_enabled("preset-ja-technical-writing", "no-nfd") {
         out.push(Box::new(rules::jt::no_nfd::NoNfd));
     }
-    if rc.preset_child_enabled("preset-ja-technical-writing", "no-invalid-control-character") {
+    if rc.preset_child_enabled(
+        "preset-ja-technical-writing",
+        "no-invalid-control-character",
+    ) {
         out.push(Box::new(
             rules::jt::no_invalid_control_character::NoInvalidControlCharacter,
         ));
     }
-    if rc.preset_child_enabled("preset-ja-technical-writing", "no-exclamation-question-mark") {
+    if rc.preset_child_enabled(
+        "preset-ja-technical-writing",
+        "no-exclamation-question-mark",
+    ) {
         out.push(Box::new(
             rules::jt::no_exclamation_question_mark::NoExclamationQuestionMark,
         ));
     }
     if rc.preset_child_enabled("preset-ja-technical-writing", "ja-unnatural-alphabet") {
-        out.push(Box::new(rules::jt::ja_unnatural_alphabet::JaUnnaturalAlphabet));
+        out.push(Box::new(
+            rules::jt::ja_unnatural_alphabet::JaUnnaturalAlphabet,
+        ));
     }
     if rc.preset_child_enabled("preset-ja-technical-writing", "no-doubled-conjunction") {
-        out.push(Box::new(rules::jt::no_doubled_conjunction::NoDoubledConjunction));
+        out.push(Box::new(
+            rules::jt::no_doubled_conjunction::NoDoubledConjunction,
+        ));
     }
     if rc.preset_child_enabled("preset-ja-technical-writing", "no-doubled-joshi") {
         out.push(Box::new(rules::jt::no_doubled_joshi::NoDoubledJoshi));
     }
     if rc.preset_child_enabled("preset-ja-technical-writing", "no-mix-dearu-desumasu") {
-        out.push(Box::new(rules::jt::no_mix_dearu_desumasu::NoMixDearuDesumasu));
+        out.push(Box::new(
+            rules::jt::no_mix_dearu_desumasu::NoMixDearuDesumasu,
+        ));
     }
     if rc.preset_child_enabled("preset-ja-technical-writing", "no-double-negative-ja") {
-        out.push(Box::new(rules::jt::no_double_negative_ja::NoDoubleNegativeJa));
+        out.push(Box::new(
+            rules::jt::no_double_negative_ja::NoDoubleNegativeJa,
+        ));
     }
     if rc.preset_child_enabled("preset-ja-technical-writing", "no-unmatched-pair") {
         out.push(Box::new(rules::jt::no_unmatched_pair::NoUnmatchedPair));
@@ -122,6 +136,6 @@ pub fn lint(source: &str, rules: &[Box<dyn Rule>]) -> Vec<Issue> {
     for r in rules {
         all.extend(r.check(&doc));
     }
-    all.sort_by(|a, b| (a.line, a.column).cmp(&(b.line, b.column)));
+    all.sort_by_key(|a| (a.line, a.column));
     all
 }

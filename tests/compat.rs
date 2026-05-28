@@ -62,7 +62,7 @@ fn load_suite(path: &str) -> Vec<Suite> {
 fn run_rule(rule: &dyn Rule, text: &str) -> Vec<Issue> {
     let doc = Document::parse(text);
     let mut issues = rule.check(&doc);
-    issues.sort_by(|a, b| (a.line, a.column).cmp(&(b.line, b.column)));
+    issues.sort_by_key(|a| (a.line, a.column));
     issues
 }
 
@@ -77,10 +77,7 @@ fn check_suite(rule: &dyn Rule, suites: Vec<Suite>) -> Report {
             }
             let issues = run_rule(rule, &case.text);
             if !issues.is_empty() {
-                let entry = report
-                    .valid_failures
-                    .entry(suite.name.clone())
-                    .or_default();
+                let entry = report.valid_failures.entry(suite.name.clone()).or_default();
                 entry.push(FailureValid {
                     index: i,
                     text: trunc(&case.text),
@@ -134,7 +131,7 @@ fn check_suite(rule: &dyn Rule, suites: Vec<Suite>) -> Report {
 }
 
 fn has_options(opts: &Option<serde_json::Value>) -> bool {
-    matches!(opts, Some(v) if !v.is_null() && !(v.is_object() && v.as_object().unwrap().is_empty()))
+    matches!(opts, Some(v) if !(v.is_null() || v.is_object() && v.as_object().unwrap().is_empty()))
 }
 
 fn errors_match(actual: &[Issue], expected: &[ExpectedError]) -> bool {
@@ -142,20 +139,20 @@ fn errors_match(actual: &[Issue], expected: &[ExpectedError]) -> bool {
         return false;
     }
     for (a, e) in actual.iter().zip(expected) {
-        if let Some(em) = &e.message {
-            if &a.message != em {
-                return false;
-            }
+        if let Some(em) = &e.message
+            && &a.message != em
+        {
+            return false;
         }
-        if let Some(el) = e.line {
-            if a.line != el {
-                return false;
-            }
+        if let Some(el) = e.line
+            && a.line != el
+        {
+            return false;
         }
-        if let Some(ec) = e.column {
-            if a.column != ec {
-                return false;
-            }
+        if let Some(ec) = e.column
+            && a.column != ec
+        {
+            return false;
         }
     }
     true

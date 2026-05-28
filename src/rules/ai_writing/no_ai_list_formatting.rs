@@ -11,14 +11,12 @@ const RULE_ID: &str = "@textlint-ja/preset-ai-writing/no-ai-list-formatting";
 
 // upstream の boldListPattern と完全一致
 static BOLD_LIST: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^[\s]*(?:[-*+]|\d+[.)])\s+\*\*([^*]+)\*\*(?:\s*([:：])|\s+([-—–])(?=\s))")
-        .unwrap()
+    Regex::new(r"^[\s]*(?:[-*+]|\d+[.)])\s+\*\*([^*]+)\*\*(?:\s*([:：])|\s+([-—–])(?=\s))").unwrap()
 });
 
 const FLASHY_EMOJIS: &[&str] = &[
     "✅", "❌", "⭐", "✨", "💯", "⚠️", "❗", "❓", "💥", "🔥", "⚡", "💪", "🚀", "💡", "🤔", "💭",
-    "🧠", "🎯", "📈", "📊", "🏆", "👍", "👎", "😊", "😎", "🎉", "🌟", "📝", "📋", "✏️", "🖊️",
-    "💼",
+    "🧠", "🎯", "📈", "📊", "🏆", "👍", "👎", "😊", "😎", "🎉", "🌟", "📝", "📋", "✏️", "🖊️", "💼",
 ];
 
 static FLASHY_EMOJI: Lazy<Regex> = Lazy::new(|| {

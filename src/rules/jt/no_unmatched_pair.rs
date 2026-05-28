@@ -15,19 +15,71 @@ struct Pair {
 }
 
 const PAIRS: &[Pair] = &[
-    Pair { key: "double quote", start: '"', end: '"' },
-    Pair { key: "angled bracket[]", start: '[', end: ']' },
-    Pair { key: "round bracket()", start: '(', end: ')' },
-    Pair { key: "curly brace{}", start: '{', end: '}' },
-    Pair { key: "かぎ括弧「」", start: '「', end: '」' },
-    Pair { key: "丸括弧（）", start: '（', end: '）' },
-    Pair { key: "二重かぎ括弧『』", start: '『', end: '』' },
-    Pair { key: "波括弧｛｝", start: '｛', end: '｝' },
-    Pair { key: "角括弧［］", start: '［', end: '］' },
-    Pair { key: "重角括弧〚〛", start: '〚', end: '〛' },
-    Pair { key: "隅付き括弧【】", start: '【', end: '】' },
-    Pair { key: "double guillemet «»", start: '«', end: '»' },
-    Pair { key: "single guillemet ‹›", start: '‹', end: '›' },
+    Pair {
+        key: "double quote",
+        start: '"',
+        end: '"',
+    },
+    Pair {
+        key: "angled bracket[]",
+        start: '[',
+        end: ']',
+    },
+    Pair {
+        key: "round bracket()",
+        start: '(',
+        end: ')',
+    },
+    Pair {
+        key: "curly brace{}",
+        start: '{',
+        end: '}',
+    },
+    Pair {
+        key: "かぎ括弧「」",
+        start: '「',
+        end: '」',
+    },
+    Pair {
+        key: "丸括弧（）",
+        start: '（',
+        end: '）',
+    },
+    Pair {
+        key: "二重かぎ括弧『』",
+        start: '『',
+        end: '』',
+    },
+    Pair {
+        key: "波括弧｛｝",
+        start: '｛',
+        end: '｝',
+    },
+    Pair {
+        key: "角括弧［］",
+        start: '［',
+        end: '］',
+    },
+    Pair {
+        key: "重角括弧〚〛",
+        start: '〚',
+        end: '〛',
+    },
+    Pair {
+        key: "隅付き括弧【】",
+        start: '【',
+        end: '】',
+    },
+    Pair {
+        key: "double guillemet «»",
+        start: '«',
+        end: '»',
+    },
+    Pair {
+        key: "single guillemet ‹›",
+        start: '‹',
+        end: '›',
+    },
 ];
 
 pub struct NoUnmatchedPair;
@@ -46,10 +98,7 @@ impl Rule for NoUnmatchedPair {
                 let mut stack: Vec<(usize, &Pair)> = Vec::new();
                 let mut i = 0usize;
                 for c in s_text.chars() {
-                    let on_top_same_end = stack
-                        .last()
-                        .map(|(_, p)| p.end == c)
-                        .unwrap_or(false);
+                    let on_top_same_end = stack.last().map(|(_, p)| p.end == c).unwrap_or(false);
                     if on_top_same_end {
                         stack.pop();
                     } else if let Some(p) = PAIRS.iter().find(|p| p.start == c) {
