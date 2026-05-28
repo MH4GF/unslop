@@ -83,7 +83,7 @@ impl Rule for AiTechWritingGuideline {
         let mut last_paragraph_pos: Option<(usize, usize)> = None;
 
         for seg in &doc.segments {
-            if seg.kind != SegmentKind::Paragraph {
+            if !matches!(seg.kind, SegmentKind::Paragraph | SegmentKind::ListItem) {
                 continue;
             }
             last_paragraph_pos = Some((seg.start_line, seg.start_column));

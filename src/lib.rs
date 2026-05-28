@@ -1,5 +1,6 @@
 pub mod config;
 pub mod document;
+pub mod morph;
 pub mod rule;
 pub mod rules;
 
@@ -35,12 +36,35 @@ pub fn build_rules(rc: &TextlintRc, base_dir: &Path) -> Vec<Box<dyn Rule>> {
             rules::ai_writing::ai_tech_writing_guideline::AiTechWritingGuideline,
         ));
     }
+    if rc.preset_child_enabled("@textlint-ja/preset-ai-writing", "no-ai-colon-continuation") {
+        out.push(Box::new(
+            rules::ai_writing::no_ai_colon_continuation::NoAiColonContinuation,
+        ));
+    }
 
     if rc.preset_child_enabled("preset-ja-technical-writing", "sentence-length") {
-        out.push(Box::new(rules::jt::sentence_length::SentenceLength::default()));
+        let max = rc
+            .preset_child_option("preset-ja-technical-writing", "sentence-length", "max")
+            .and_then(|v| v.as_u64())
+            .map(|v| v as usize)
+            .unwrap_or(100);
+        out.push(Box::new(rules::jt::sentence_length::SentenceLength { max }));
     }
     if rc.preset_child_enabled("preset-ja-technical-writing", "max-comma") {
-        out.push(Box::new(rules::jt::max_comma::MaxComma::default()));
+        let max = rc
+            .preset_child_option("preset-ja-technical-writing", "max-comma", "max")
+            .and_then(|v| v.as_u64())
+            .map(|v| v as usize)
+            .unwrap_or(3);
+        out.push(Box::new(rules::jt::max_comma::MaxComma { max }));
+    }
+    if rc.preset_child_enabled("preset-ja-technical-writing", "max-ten") {
+        let max = rc
+            .preset_child_option("preset-ja-technical-writing", "max-ten", "max")
+            .and_then(|v| v.as_u64())
+            .map(|v| v as usize)
+            .unwrap_or(3);
+        out.push(Box::new(rules::jt::max_ten::MaxTen { max }));
     }
     if rc.preset_child_enabled("preset-ja-technical-writing", "no-zero-width-spaces") {
         out.push(Box::new(rules::jt::no_zero_width_spaces::NoZeroWidthSpaces));
@@ -63,6 +87,21 @@ pub fn build_rules(rc: &TextlintRc, base_dir: &Path) -> Vec<Box<dyn Rule>> {
     }
     if rc.preset_child_enabled("preset-ja-technical-writing", "ja-unnatural-alphabet") {
         out.push(Box::new(rules::jt::ja_unnatural_alphabet::JaUnnaturalAlphabet));
+    }
+    if rc.preset_child_enabled("preset-ja-technical-writing", "no-doubled-conjunction") {
+        out.push(Box::new(rules::jt::no_doubled_conjunction::NoDoubledConjunction));
+    }
+    if rc.preset_child_enabled("preset-ja-technical-writing", "no-doubled-joshi") {
+        out.push(Box::new(rules::jt::no_doubled_joshi::NoDoubledJoshi));
+    }
+    if rc.preset_child_enabled("preset-ja-technical-writing", "no-mix-dearu-desumasu") {
+        out.push(Box::new(rules::jt::no_mix_dearu_desumasu::NoMixDearuDesumasu));
+    }
+    if rc.preset_child_enabled("preset-ja-technical-writing", "no-double-negative-ja") {
+        out.push(Box::new(rules::jt::no_double_negative_ja::NoDoubleNegativeJa));
+    }
+    if rc.preset_child_enabled("preset-ja-technical-writing", "no-unmatched-pair") {
+        out.push(Box::new(rules::jt::no_unmatched_pair::NoUnmatchedPair));
     }
 
     if rc.rule_enabled("prh") {

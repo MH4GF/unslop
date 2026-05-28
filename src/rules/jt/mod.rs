@@ -1,5 +1,11 @@
 pub mod ja_unnatural_alphabet;
 pub mod max_comma;
+pub mod max_ten;
+pub mod no_double_negative_ja;
+pub mod no_doubled_conjunction;
+pub mod no_doubled_joshi;
+pub mod no_mix_dearu_desumasu;
+pub mod no_unmatched_pair;
 pub mod no_exclamation_question_mark;
 pub mod no_hankaku_kana;
 pub mod no_invalid_control_character;

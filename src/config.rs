@@ -43,6 +43,14 @@ impl TextlintRc {
         }
     }
 
+    /// preset 配下の child rule の option value を取り出す。
+    pub fn preset_child_option(&self, preset: &str, child: &str, key: &str) -> Option<&serde_json::Value> {
+        let preset_v = self.rules.get(preset)?;
+        let obj = preset_v.as_object()?;
+        let child_v = obj.get(child)?;
+        child_v.as_object()?.get(key)
+    }
+
     pub fn prh_rule_paths(&self, base_dir: &Path) -> Vec<PathBuf> {
         let prh = match self.rules.get("prh") {
             Some(serde_json::Value::Object(o)) => o,
