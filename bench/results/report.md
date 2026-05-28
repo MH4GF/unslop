@@ -32,7 +32,10 @@ baseline (この run): **743ms**.
 | off:preset/ai       |         740 |              -3 |
 | off:preset/jt       |         515 |            -228 |
 
-→ `preset-ja-technical-writing` 22 rules で合計 **~228ms**. 1 rule あたり平均 10ms 程度. `preset-ai-writing` は medium fixture では hit が少なく寄与小. prh も軽い (28ms).
+→ `preset-ja-technical-writing` 22 rules で合計 **~228ms**.
+1 rule あたり平均 10ms 程度.
+`preset-ai-writing` は medium fixture では hit が少なく寄与小.
+prh も軽い (28ms).
 
 ### 個別 rule (preset-ja-technical-writing 配下)
 
@@ -50,7 +53,9 @@ baseline (この run): **743ms**.
 | max-comma                     |             -25 |
 | no-doubled-conjunctive-particle-ga |        -23 |
 
-→ Δ が ±50ms 以下に収まり、**個別 rule の重さは計測ノイズに埋もれている**. 22 rules がそれぞれ 5-20ms ずつ消費していると見るのが妥当. 「一発で重い rule」は無く、合計でじわじわ重い構造.
+差分 ±50ms 以下に収まり、**個別 rule の重さは計測ノイズに埋もれている**.
+22 rules それぞれ 5-20ms ずつ消費していると見るのが妥当.
+「一発で重い rule」は無く、合計でじわじわ重い構造.
 
 ## 3. 内訳推定
 
@@ -136,19 +141,51 @@ Rust 実装 (release build) を同じ fixture で実測。1 計測 6 回、warmu
 
 加えて `prh` 1 個。
 
-### 未済 rule (Phase 1b 候補、kuromoji や専用 parser が要る)
+## 7. Phase 1b 実装
 
-preset-ai-writing から no-ai-colon-continuation。
-preset-ja-technical-writing から次のとおり。
+lindera-rs (embed-ipadic) を導入し、形態素解析を要する rule + 専用 parser rule を追加した。
 
+| fixture     | textlint (ms) | unslop 1a (ms) | unslop 1b (ms) | 1b speedup |
+| ----------- | ------------: | -------------: | -------------: | ---------: |
+| empty.md    |           269 |             20 |             22 |      12.2x |
+| small.md    |           564 |             22 |             39 |      14.5x |
+| medium.md   |           720 |             29 |             46 |      15.6x |
+| large.md    |           573 |             23 |             36 |      15.9x |
+
+lindera の cold start + tokenize で +14〜17ms 増えたが依然 15x 高速。
+
+### Phase 1b 追加 rule
+
+形態素解析を使う 5 個。
+
+- preset-ai-writing: no-ai-colon-continuation
+- preset-ja-technical-writing: max-ten
+- preset-ja-technical-writing: no-doubled-conjunction
+- preset-ja-technical-writing: no-mix-dearu-desumasu (simplified)
+- preset-ja-technical-writing: no-double-negative-ja
+
+専用 parser を使う 1 個。
+
+- preset-ja-technical-writing: no-unmatched-pair (PairMaker 相当を Vec ベース stack で実装)
+
+これで preset-ja-technical-writing 配下の対応 rule は次の 14 個。
+
+- sentence-length
+- max-comma
 - max-ten
+- no-mix-dearu-desumasu (simplified)
 - no-doubled-conjunction
-- no-mix-dearu-desumasu
 - no-double-negative-ja
+- no-zero-width-spaces
+- no-hankaku-kana
+- no-nfd
+- no-invalid-control-character
+- no-exclamation-question-mark
+- ja-unnatural-alphabet
 - no-unmatched-pair
-- no-dropping-the-ra
 
-ja-no-mixed-period は config で disable 済のため対象外。
+ja-no-mixed-period は config で disable 済。
+未対応で残るのは no-dropping-the-ra のみで、公式 repo の所在を確認できていない。
 
 ### 互換テスト
 
@@ -162,7 +199,7 @@ Phase 1b 以降に integration test を追加する。
 
 新 hook を `~/.claude/hooks/unslop-guard.sh` として用意した。
 既存の `textlint-guard` hook は残してある。
-`settings.json` の hooks 設定で差し替える。
+`~/.claude/settings.json` の PostToolUse hook を unslop-guard.sh に切替え済。
 `UNSLOP_GUARD=off` で無効化、`UNSLOP_BIN=<path>` でバイナリ位置を override できる。
 バイナリ場所 (固定): `/Users/mh4gf/ghq/github.com/MH4GF/unslop/target/release/unslop`。
 
