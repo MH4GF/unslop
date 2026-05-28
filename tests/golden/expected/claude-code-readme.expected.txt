@@ -1,0 +1,6 @@
+L13 [max-comma]
+L21 [sentence-length]
+L5 [sentence-length]
+L9 [max-comma]
+L9 [no-ai-list-formatting]
+L9 [sentence-length]

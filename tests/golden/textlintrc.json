@@ -1,0 +1,19 @@
+{
+  "plugins": {
+    "@textlint/markdown": {
+      "extensions": [".mdx"]
+    }
+  },
+  "rules": {
+    "preset-ja-technical-writing": {
+      "ja-no-mixed-period": false,
+      "sentence-length": {
+        "max": 120
+      }
+    },
+    "@textlint-ja/preset-ai-writing": true,
+    "prh": {
+      "rulePaths": ["./prh.yml"]
+    }
+  }
+}
