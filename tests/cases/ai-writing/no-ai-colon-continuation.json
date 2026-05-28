@@ -1,0 +1,160 @@
+[
+  {
+    "name": "no-ai-colon-continuation",
+    "valid": [
+      {
+        "text": "これは通常のテキストです。"
+      },
+      {
+        "text": "コードの例:\nfunction test() { return true; }"
+      },
+      {
+        "text": "使用方法:\n```bash\ncommand\n```"
+      },
+      {
+        "text": "API仕様:\n```javascript\napi.call()\n```"
+      },
+      {
+        "text": "手順:\n- ステップ1\n- ステップ2"
+      },
+      {
+        "text": "設定:\n> 重要な設定です"
+      },
+      {
+        "text": "データ:\n| 列1 | 列2 |\n|-----|-----|"
+      },
+      {
+        "text": "Install with npm:\n```bash\nnpm install\n```"
+      },
+      {
+        "text": "Install with [npm](https://www.npmjs.com/package/example):\n```bash\nnpm install\n```"
+      },
+      {
+        "text": "Run the test:\n```bash\nnpm test\n```"
+      },
+      {
+        "text": "検出される例:\n```javascript\ncode\n```"
+      },
+      {
+        "text": "表示される結果:\n- 結果1\n- 結果2"
+      },
+      {
+        "text": "実行される手順:\n> 手順の説明"
+      },
+      {
+        "text": "検出する例:\n```javascript\ncode\n```"
+      },
+      {
+        "text": "実行する方法:\n- 方法1\n- 方法2"
+      },
+      {
+        "text": "設定する手順:\n> 手順の説明"
+      },
+      {
+        "text": "使い方:\n```bash\ncommand\n```"
+      },
+      {
+        "text": "例:\n- 項目1\n- 項目2"
+      },
+      {
+        "text": "正解:\n> これが正解です"
+      },
+      {
+        "text": "これは使用します:\n```bash\ncommand\n```",
+        "options": {
+          "allows": [
+            "使用します"
+          ]
+        }
+      },
+      {
+        "text": "実行します:\n```javascript\nrun()\n```",
+        "options": {
+          "allows": [
+            "/実行.*/"
+          ]
+        }
+      },
+      {
+        "text": "実行します:\n```bash\ncommand\n```",
+        "options": {
+          "disableCodeBlock": true
+        }
+      },
+      {
+        "text": "設定します:\n- ステップ1\n- ステップ2",
+        "options": {
+          "disableList": true
+        }
+      },
+      {
+        "text": "説明します:\n> これは説明です",
+        "options": {
+          "disableQuote": true
+        }
+      },
+      {
+        "text": "表示します:\n| 列1 | 列2 |\n|-----|-----|",
+        "options": {
+          "disableTable": true
+        }
+      }
+    ],
+    "invalid": [
+      {
+        "text": "実行します:\n```bash\ncommand\n```",
+        "options": null,
+        "errors": [
+          {
+            "message": "「実行します:」のような述語とコロンで終わるパターンは、読み手によっては英語の構文を直訳したような印象を与える場合があります。「次のように〜します。」のような自然な日本語表現を検討してください。"
+          }
+        ]
+      },
+      {
+        "text": "説明します:\n- 項目1\n- 項目2",
+        "options": null,
+        "errors": [
+          {
+            "message": "「説明します:」のような述語とコロンで終わるパターンは、読み手によっては英語の構文を直訳したような印象を与える場合があります。「次のように〜します。」のような自然な日本語表現を検討してください。"
+          }
+        ]
+      },
+      {
+        "text": "使用します:\n> これは使用方法です",
+        "options": null,
+        "errors": [
+          {
+            "message": "「使用します:」のような述語とコロンで終わるパターンは、読み手によっては英語の構文を直訳したような印象を与える場合があります。「次のように〜します。」のような自然な日本語表現を検討してください。"
+          }
+        ]
+      },
+      {
+        "text": "表示します:\n| 列1 | 列2 |\n|-----|-----|",
+        "options": null,
+        "errors": [
+          {
+            "message": "「表示します:」のような述語とコロンで終わるパターンは、読み手によっては英語の構文を直訳したような印象を与える場合があります。「次のように〜します。」のような自然な日本語表現を検討してください。"
+          }
+        ]
+      },
+      {
+        "text": "例えば:\n\n- refとreactiveの使い分けが最初は分からない。",
+        "options": null,
+        "errors": [
+          {
+            "message": "「例えば:」のような述語とコロンで終わるパターンは、読み手によっては英語の構文を直訳したような印象を与える場合があります。「次のように〜します。」のような自然な日本語表現を検討してください。"
+          }
+        ]
+      },
+      {
+        "text": "JSXはJavaScriptの中でUIを記述するため、プログラマーにとって理解しやすいです：\n\n- 条件分岐やループは通常のJavaScriptの記法",
+        "options": null,
+        "errors": [
+          {
+            "message": "「JSXはJavaScriptの中でUIを記述するため、プログラマーにとって理解しやすいです：」のような述語とコロンで終わるパターンは、読み手によっては英語の構文を直訳したような印象を与える場合があります。「次のように〜します。」のような自然な日本語表現を検討してください。"
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,232 @@
+[
+  {
+    "name": "textlint-rule-sentence-length",
+    "valid": [
+      {
+        "text": "This is a article"
+      },
+      {
+        "text": "Test`code`です。"
+      },
+      {
+        "text": "\"This\" is code.",
+        "options": {
+          "max": 15
+        }
+      },
+      {
+        "text": "[textlint/textlint-filter-rule-comments: textlint filter rule that disables all rules between comments directive.](https://github.com/textlint/textlint-filter-rule-comments)"
+      },
+      {
+        "text": "- [textlint/textlint-filter-rule-comments: textlint filter rule that disables all rules between comments directive.](https://github.com/textlint/textlint-filter-rule-comments)"
+      },
+      {
+        "text": "> ignore",
+        "options": {
+          "max": 1
+        }
+      },
+      {
+        "text": "ab`c`de",
+        "options": {
+          "max": 5
+        }
+      },
+      {
+        "text": "[123](http://example.com \"123456\")45",
+        "options": {
+          "max": 5
+        }
+      },
+      {
+        "text": "1234(56789)",
+        "options": {
+          "max": 5,
+          "skipPatterns": [
+            "/\\(.*\\)$/"
+          ]
+        }
+      },
+      {
+        "text": "<s>123</s><b>45</b>",
+        "options": {
+          "max": 5
+        }
+      },
+      {
+        "text": "[http://example.com](http://example.com)",
+        "options": {
+          "max": 5
+        }
+      },
+      {
+        "text": "- [abc](http://example.com \"abc\")de",
+        "options": {
+          "max": 5
+        }
+      },
+      {
+        "text": "\n- abcde\n- abcde\n- abcde\n- abcde\n- abcde\n",
+        "options": {
+          "max": 5
+        }
+      },
+      {
+        "text": "実行コンテキストが\"Script\"である場合、そのコード直下に書かれた`this`はグローバルオブジェクトを参照します。\nグローバルオブジェクトとは、実行環境において異なるものが定義されています。\nブラウザなら`window`オブジェクト、Node.jsなら`global`オブジェクトとなります。",
+        "options": {
+          "max": 90
+        }
+      },
+      {
+        "text": "また*CORS policy Invalid*のようなエラーがコンソールに表示されている場合は、[Same Origin Policy][]により`index.js`の読み込みが失敗しています。\n\n[Same Origin Policy]: https://example.com/",
+        "options": {
+          "max": 90
+        }
+      },
+      {
+        "text": "ではみなさんは、そういうふうに川だと云いわれたり、乳の流れたあとだと云われたりしていたこのぼんやりと白いものがほんとうは何かご承知ですか。\n\nではみなさんは、そういうふうに川だと云いわれたり、乳の流れたあとだと云われたりしていたこの<a href=\"https://www.aozora.gr.jp/cards/000081/files/456_15050.html\" target=\"_blank\" rel=\"noopener noreferrer\">ぼんやりと白いもの</a>がほんとうは何かご承知ですか。\n",
+        "options": null
+      },
+      {
+        "text": "JavaScriptをWasmにして実行する仕組みについて。\nQuickJSを使いJavaScriptをByteCodeにしたxxxxを作成し、`QuickJS.wasm`と動的にリンクして大部分を共有している。\nShopify Functionで利用されるが、非同期処理の制限や5ms未満での実行制限がある。",
+        "options": null
+      },
+      {
+        "text": "He said \"This is a pen. I like it\".",
+        "options": {
+          "max": 10,
+          "skipPatterns": [
+            "/\".*\"/"
+          ]
+        }
+      },
+      {
+        "text": "𦥑井と臼井",
+        "options": {
+          "max": 5,
+          "countBy": "codepoints"
+        }
+      }
+    ],
+    "invalid": [
+      {
+        "text": "123456",
+        "options": {
+          "max": 5
+        },
+        "errors": [
+          {
+            "message": "Line 1 sentence length(6) exceeds the maximum sentence length of 5.\nOver 1 characters."
+          }
+        ]
+      },
+      {
+        "text": "123\n45",
+        "options": {
+          "max": 5
+        },
+        "errors": [
+          {
+            "message": "Line 1 sentence length(6) exceeds the maximum sentence length of 5.\nOver 1 characters."
+          }
+        ]
+      },
+      {
+        "text": "text\n\n123456",
+        "options": {
+          "max": 5
+        },
+        "errors": [
+          {
+            "message": "Line 3 sentence length(6) exceeds the maximum sentence length of 5.\nOver 1 characters."
+          }
+        ]
+      },
+      {
+        "text": "11111\n2222\n3333333",
+        "options": {
+          "max": 5
+        },
+        "errors": [
+          {
+            "message": "Line 1 sentence length(18) exceeds the maximum sentence length of 5.\nOver 13 characters."
+          }
+        ]
+      },
+      {
+        "text": "あいうえお。\n\nあいうえお。\nあいうえおあかさたな。",
+        "options": {
+          "max": 10
+        },
+        "errors": [
+          {
+            "message": "Line 4 sentence length(11) exceeds the maximum sentence length of 10.\nOver 1 characters.",
+            "line": 4,
+            "column": 1
+          }
+        ]
+      },
+      {
+        "text": "text\n\nline3\nline4\n",
+        "options": {
+          "max": 5
+        },
+        "errors": [
+          {
+            "message": "Line 3 sentence length(11) exceeds the maximum sentence length of 5.\nOver 6 characters."
+          }
+        ]
+      },
+      {
+        "text": "This is text.\n            \n_Middleware_ という仕組み自体は[Connect](../connect/README.md)と似ています。\nしかし、 _Middleware_ が直接的に結果(State)を直接書き換える事はできません。\nこれは、Connectが最終的な結果(response)を書き換えできるの対して、\nReduxの _Middleware_ は扱える範囲がdispatchからReducerまでと線引されている違いと言えます。",
+        "options": {
+          "max": 100
+        },
+        "errors": [
+          {
+            "message": "Line 5 sentence length(102) exceeds the maximum sentence length of 100.\nOver 2 characters.",
+            "line": 5,
+            "column": 1
+          }
+        ]
+      },
+      {
+        "text": "123456789(56789)",
+        "options": {
+          "max": 5,
+          "skipPatterns": [
+            "/\\(.*\\)$/"
+          ]
+        },
+        "errors": [
+          {
+            "message": "Line 1 sentence length(9, original:16) exceeds the maximum sentence length of 5.\nOver 4 characters."
+          }
+        ]
+      },
+      {
+        "text": "TEST [http://example.com](http://example.com)",
+        "options": {
+          "max": 5,
+          "skipUrlStringLink": false
+        },
+        "errors": [
+          {
+            "message": "Line 1 sentence length(23) exceeds the maximum sentence length of 5.\nOver 18 characters."
+          }
+        ]
+      },
+      {
+        "text": "𦥑井と臼井",
+        "options": {
+          "max": 5
+        },
+        "errors": [
+          {
+            "message": "Line 1 sentence length(6) exceeds the maximum sentence length of 5.\nOver 1 characters."
+          }
+        ]
+      }
+    ]
+  }
+]

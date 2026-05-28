@@ -1,0 +1,59 @@
+[
+  {
+    "name": "no-nfd",
+    "valid": [
+      {
+        "text": "ポケット"
+      },
+      {
+        "text": "エンジン"
+      }
+    ],
+    "invalid": [
+      {
+        "text": "ポケット",
+        "options": null,
+        "errors": [
+          {
+            "message": "Disallow to use NFD(well-known as UTF8-MAC 濁点): \"ポ\" => \"ポ\"",
+            "line": 1,
+            "column": 2
+          }
+        ]
+      },
+      {
+        "text": "ホ゜ケット",
+        "options": null,
+        "errors": [
+          {
+            "message": "Disallow to use NFD(well-known as UTF8-MAC 濁点): \"ホ゜\" => \"ポ\"",
+            "line": 1,
+            "column": 2
+          }
+        ]
+      },
+      {
+        "text": "エンジン",
+        "options": null,
+        "errors": [
+          {
+            "message": "Disallow to use NFD(well-known as UTF8-MAC 濁点): \"ジ\" => \"ジ\"",
+            "line": 1,
+            "column": 4
+          }
+        ]
+      },
+      {
+        "text": "エンシ゛ン",
+        "options": null,
+        "errors": [
+          {
+            "message": "Disallow to use NFD(well-known as UTF8-MAC 濁点): \"シ゛\" => \"ジ\"",
+            "line": 1,
+            "column": 4
+          }
+        ]
+      }
+    ]
+  }
+]
