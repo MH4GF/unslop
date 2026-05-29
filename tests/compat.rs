@@ -1,4 +1,4 @@
-//! upstream の textlint-tester ケースを使った互換テスト。
+//! upstream の textlint-tester ケース + unslop-original rule のケースを使った検証。
 //!
 //! tests/cases/<group>/<rule>.json を読み、各 rule 実装に対して
 //! valid → issue 0、invalid → 期待 message 数と一致 (中身は exact match) を検証する。
@@ -16,6 +16,7 @@ use unslop::rules::ai_writing::no_ai_emphasis_patterns::NoAiEmphasisPatterns;
 use unslop::rules::ai_writing::no_ai_hype_expressions::NoAiHypeExpressions;
 use unslop::rules::ai_writing::no_ai_list_formatting::NoAiListFormatting;
 use unslop::rules::jt::no_nfd::NoNfd;
+use unslop::rules::unslop::no_mid_sentence_break::NoMidSentenceBreak;
 
 #[derive(Debug, Deserialize)]
 struct Suite {
@@ -260,4 +261,11 @@ fn no_nfd() {
     let suites = load_suite("jt/no-nfd.json");
     let report = check_suite(&NoNfd, suites);
     report.assert_clean("no-nfd");
+}
+
+#[test]
+fn no_mid_sentence_break() {
+    let suites = load_suite("unslop/no-mid-sentence-break.json");
+    let report = check_suite(&NoMidSentenceBreak, suites);
+    report.assert_clean("no-mid-sentence-break");
 }

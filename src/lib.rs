@@ -118,6 +118,13 @@ pub fn build_rules(rc: &TextlintRc, base_dir: &Path) -> Vec<Box<dyn Rule>> {
         out.push(Box::new(rules::jt::no_unmatched_pair::NoUnmatchedPair));
     }
 
+    // unslop-original rule (textlint に該当 rule なし)。standalone gate で有効化する。
+    if rc.rule_enabled("no-mid-sentence-break") {
+        out.push(Box::new(
+            rules::unslop::no_mid_sentence_break::NoMidSentenceBreak,
+        ));
+    }
+
     if rc.rule_enabled("prh") {
         for p in rc.prh_rule_paths(base_dir) {
             match rules::prh::Prh::from_yaml_path(&p) {

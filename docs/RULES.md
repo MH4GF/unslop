@@ -45,6 +45,14 @@ upstream: <https://github.com/textlint-ja/textlint-rule-preset-ai-writing>
 |------|:----:|:----------:|
 | prh | ✅ | YAML の `version: 1` + `rules: [{ expected, pattern }]` 形式のみ。`$1` 置換と複数 YAML import は未対応 |
 
+## unslop-original (textlint 非対応)
+
+textlint に対応 rule がない unslop 独自の防波堤。`.textlintrc.json` の rules へ直接書いて有効化する。
+
+| rule | 実装 | 概要 |
+|------|:----:|------|
+| no-mid-sentence-break | ✅ | 段落 (引用配下を除く) の生テキストを走査し、文末記号以外の直後の改行を文中改行として検出する。長い一文の途中へ改行を挟み sentence-length をすり抜ける書き方を防ぐ。検出のみ |
+
 ## options 対応状況
 
 | 設定 | 対応 |

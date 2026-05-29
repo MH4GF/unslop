@@ -27,6 +27,8 @@ pub struct TextSegment {
     /// source 内 column (1-based, char ベース, segment 起点)。
     pub start_column: usize,
     pub kind: SegmentKind,
+    /// segment が BlockQuote 配下にあるか。引用を対象外にする rule が参照する。
+    pub in_block_quote: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -50,7 +52,7 @@ impl Document {
 
         let line_starts = build_line_starts(source);
         let mut segments = Vec::new();
-        collect(root, false, source, &line_starts, &mut segments);
+        collect(root, false, false, source, &line_starts, &mut segments);
 
         Document {
             source: source.to_string(),
@@ -149,6 +151,7 @@ fn push_segment(
     line_starts: &[usize],
     pos: Sourcepos,
     kind: SegmentKind,
+    in_block_quote: bool,
 ) {
     if let Some((text, start_byte, start_line, start_column)) =
         segment_slice(source, line_starts, pos)
@@ -159,6 +162,7 @@ fn push_segment(
             start_line,
             start_column,
             kind,
+            in_block_quote,
         });
     }
 }
@@ -166,6 +170,7 @@ fn push_segment(
 fn collect<'a>(
     node: &'a AstNode<'a>,
     parent_is_list_item: bool,
+    in_block_quote: bool,
     source: &str,
     line_starts: &[usize],
     out: &mut Vec<TextSegment>,
@@ -176,29 +181,59 @@ fn collect<'a>(
     drop(data);
 
     let mut child_parent_is_list_item = false;
+    let mut child_in_block_quote = in_block_quote;
     match &value {
         NodeValue::Paragraph => {
             if !parent_is_list_item {
-                push_segment(out, source, line_starts, pos, SegmentKind::Paragraph);
+                push_segment(
+                    out,
+                    source,
+                    line_starts,
+                    pos,
+                    SegmentKind::Paragraph,
+                    in_block_quote,
+                );
             }
             // textlint と同じく、ListItem 直下 Paragraph は ListItem 側で扱うのでスキップ。
             return;
         }
         NodeValue::Heading(_) => {
-            push_segment(out, source, line_starts, pos, SegmentKind::Heading);
+            push_segment(
+                out,
+                source,
+                line_starts,
+                pos,
+                SegmentKind::Heading,
+                in_block_quote,
+            );
             return;
         }
         NodeValue::TableCell => {
-            push_segment(out, source, line_starts, pos, SegmentKind::TableCell);
+            push_segment(
+                out,
+                source,
+                line_starts,
+                pos,
+                SegmentKind::TableCell,
+                in_block_quote,
+            );
             return;
         }
         NodeValue::Item(_) => {
-            push_segment(out, source, line_starts, pos, SegmentKind::ListItem);
+            push_segment(
+                out,
+                source,
+                line_starts,
+                pos,
+                SegmentKind::ListItem,
+                in_block_quote,
+            );
             // 入れ子の list は内部も再帰する (各 Item を個別 segment 化)。
             child_parent_is_list_item = true;
         }
         NodeValue::BlockQuote => {
             // BlockQuote 自体は segment にしない。中の Paragraph で拾われる。
+            child_in_block_quote = true;
         }
         NodeValue::CodeBlock(_) | NodeValue::HtmlBlock(_) | NodeValue::ThematicBreak => {
             return;
@@ -207,6 +242,13 @@ fn collect<'a>(
     }
 
     for child in node.children() {
-        collect(child, child_parent_is_list_item, source, line_starts, out);
+        collect(
+            child,
+            child_parent_is_list_item,
+            child_in_block_quote,
+            source,
+            line_starts,
+            out,
+        );
     }
 }
