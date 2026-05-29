@@ -29,6 +29,9 @@ pub struct TextSegment {
     pub kind: SegmentKind,
     /// segment が BlockQuote 配下にあるか。引用を対象外にする rule が参照する。
     pub in_block_quote: bool,
+    /// segment 内 inline code span の byte 範囲 (segment 相対, 区切り文字含む)。
+    /// prh 等が text ノード相当だけを見るために、この範囲のマッチをスキップする。
+    pub code_ranges: Vec<(usize, usize)>,
 }
 
 #[derive(Debug, Clone)]
@@ -145,10 +148,11 @@ fn segment_slice(
     Some((text, start, pos.start.line, pos.start.column))
 }
 
-fn push_segment(
+fn push_segment<'a>(
     out: &mut Vec<TextSegment>,
     source: &str,
     line_starts: &[usize],
+    node: &'a AstNode<'a>,
     pos: Sourcepos,
     kind: SegmentKind,
     in_block_quote: bool,
@@ -156,6 +160,15 @@ fn push_segment(
     if let Some((text, start_byte, start_line, start_column)) =
         segment_slice(source, line_starts, pos)
     {
+        let mut code_ranges = Vec::new();
+        collect_code_ranges(
+            node,
+            source,
+            line_starts,
+            start_byte,
+            text.len(),
+            &mut code_ranges,
+        );
         out.push(TextSegment {
             text,
             start_byte,
@@ -163,7 +176,37 @@ fn push_segment(
             start_column,
             kind,
             in_block_quote,
+            code_ranges,
         });
+    }
+}
+
+/// block ノード配下の inline `Code` ノードを集め、segment 相対 byte 範囲に変換する。
+/// emphasis 等にネストした code span も拾うため subtree 全体を走査する。
+fn collect_code_ranges<'a>(
+    node: &'a AstNode<'a>,
+    source: &str,
+    line_starts: &[usize],
+    seg_start: usize,
+    seg_len: usize,
+    out: &mut Vec<(usize, usize)>,
+) {
+    for descendant in node.descendants() {
+        let data = descendant.data.borrow();
+        if !matches!(data.value, NodeValue::Code(_)) {
+            continue;
+        }
+        let pos = data.sourcepos;
+        let abs_start = byte_offset_start(source, line_starts, pos.start.line, pos.start.column);
+        let abs_end = byte_offset_end_exclusive(source, line_starts, pos.end.line, pos.end.column);
+        if abs_end <= abs_start || abs_start < seg_start {
+            continue;
+        }
+        let rel_start = abs_start - seg_start;
+        let rel_end = (abs_end - seg_start).min(seg_len);
+        if rel_start < rel_end {
+            out.push((rel_start, rel_end));
+        }
     }
 }
 
@@ -189,6 +232,7 @@ fn collect<'a>(
                     out,
                     source,
                     line_starts,
+                    node,
                     pos,
                     SegmentKind::Paragraph,
                     in_block_quote,
@@ -202,6 +246,7 @@ fn collect<'a>(
                 out,
                 source,
                 line_starts,
+                node,
                 pos,
                 SegmentKind::Heading,
                 in_block_quote,
@@ -213,6 +258,7 @@ fn collect<'a>(
                 out,
                 source,
                 line_starts,
+                node,
                 pos,
                 SegmentKind::TableCell,
                 in_block_quote,
@@ -224,6 +270,7 @@ fn collect<'a>(
                 out,
                 source,
                 line_starts,
+                node,
                 pos,
                 SegmentKind::ListItem,
                 in_block_quote,

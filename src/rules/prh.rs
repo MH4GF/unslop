@@ -88,8 +88,11 @@ impl Rule for Prh {
                 while let Ok(Some(m)) = rule.re.find_from_pos(&seg.text, from) {
                     let s = m.start();
                     let e = m.end();
+                    // 本家 textlint-rule-prh は text ノードだけを見て Code ノードを無視する。
+                    // code span (区間 overlap) に重なるマッチはスキップする。
+                    let in_code_span = seg.code_ranges.iter().any(|&(cs, ce)| s < ce && cs < e);
                     let actual = m.as_str().to_string();
-                    if actual != rule.expected {
+                    if !in_code_span && actual != rule.expected {
                         let (line, column) = doc.pos_at(seg, s);
                         issues.push(Issue {
                             rule_id: RULE_ID.to_string(),
@@ -104,5 +107,69 @@ impl Rule for Prh {
             }
         }
         issues
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::document::Document;
+
+    /// `worker` → ワーカー の単一ルールを持つ Prh を組む。
+    fn prh_worker() -> Prh {
+        Prh {
+            rules: vec![CompiledRule {
+                expected: "ワーカー".to_string(),
+                re: Regex::new(r"\bworker\b").unwrap(),
+            }],
+        }
+    }
+
+    fn messages(src: &str) -> Vec<(usize, String)> {
+        let doc = Document::parse(src);
+        prh_worker()
+            .check(&doc)
+            .into_iter()
+            .map(|i| (i.line, i.message))
+            .collect()
+    }
+
+    #[test]
+    fn flags_plain_text() {
+        // 地の文の英単語は従来どおり検出される (退行なし)。
+        let got = messages("これは worker です。");
+        assert_eq!(got.len(), 1);
+        assert_eq!(got[0].1, "worker => ワーカー");
+    }
+
+    #[test]
+    fn skips_inline_code_span() {
+        // バックティックで囲んだ識別子はスキップする。
+        assert!(messages("これは `worker` です。").is_empty());
+    }
+
+    #[test]
+    fn skips_double_backtick_code_span() {
+        assert!(messages("これは ``worker`` です。").is_empty());
+    }
+
+    #[test]
+    fn skips_fenced_code_block() {
+        // fenced code block の中身も対象外。
+        assert!(messages("```\nworker\n```\n").is_empty());
+    }
+
+    #[test]
+    fn flags_plain_but_skips_code_span_when_mixed() {
+        // 地の文とコードスパンの混在では地の文側のみ検出する。
+        let got = messages("地の worker と `worker` を併記する。");
+        assert_eq!(got.len(), 1, "got = {got:?}");
+        assert_eq!(got[0].1, "worker => ワーカー");
+    }
+
+    #[test]
+    fn skips_code_span_nested_in_emphasis() {
+        // emphasis にネストした code span も範囲に含めて拾う。
+        assert!(messages("これは *`worker`* です。").is_empty());
     }
 }
