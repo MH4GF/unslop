@@ -57,6 +57,11 @@ impl Document {
         let mut segments = Vec::new();
         collect(root, false, false, source, &line_starts, &mut segments);
 
+        let fm_end = frontmatter_end(source);
+        if fm_end > 0 {
+            segments.retain(|s| s.start_byte >= fm_end);
+        }
+
         Document {
             source: source.to_string(),
             segments,
@@ -81,6 +86,24 @@ impl Document {
     pub fn pos_at(&self, segment: &TextSegment, segment_byte_offset: usize) -> (usize, usize) {
         let abs = segment.start_byte + segment_byte_offset.min(segment.text.len());
         self.locate(abs)
+    }
+}
+
+/// `---` で囲まれた YAML frontmatter の末尾バイト (exclusive) を返す。
+/// frontmatter が存在しない場合は 0 を返す。
+fn frontmatter_end(source: &str) -> usize {
+    if !source.starts_with("---\n") {
+        return 0;
+    }
+    let body = &source[4..];
+    if let Some(pos) = body.find("\n---\n") {
+        4 + pos + 5
+    } else if let Some(pos) = body.find("\n---\r\n") {
+        4 + pos + 6
+    } else if body.ends_with("\n---") {
+        source.len()
+    } else {
+        0
     }
 }
 
