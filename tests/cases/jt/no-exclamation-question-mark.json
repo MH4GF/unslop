@@ -1,0 +1,33 @@
+[
+  {
+    "name": "no-exclamation-question-mark",
+    "valid": [
+      { "text": "普通の文章" },
+      { "text": "Yahoo!検索" },
+      { "text": "[週次](obsidian://open?vault=w&file=a.md)" },
+      { "text": "<https://x.test/a?b=1>" },
+      { "text": "![alt](/p/q.png?x=1)" },
+      { "text": "code `obj.method?` span" }
+    ],
+    "invalid": [
+      {
+        "text": "これ本当?",
+        "errors": [
+          { "message": "Disallow to use \"?\".", "line": 1 }
+        ]
+      },
+      {
+        "text": "すごい！",
+        "errors": [
+          { "message": "Disallow to use \"！\".", "line": 1 }
+        ]
+      },
+      {
+        "text": "[ヤバ？い](https://x.test)",
+        "errors": [
+          { "message": "Disallow to use \"？\".", "line": 1 }
+        ]
+      }
+    ]
+  }
+]
