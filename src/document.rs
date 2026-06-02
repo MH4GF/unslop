@@ -32,6 +32,10 @@ pub struct TextSegment {
     /// segment 内 inline code span の byte 範囲 (segment 相対, 区切り文字含む)。
     /// prh 等が text ノード相当だけを見るために、この範囲のマッチをスキップする。
     pub code_ranges: Vec<(usize, usize)>,
+    /// segment 内 Link/Image node の URL 部分の byte 範囲 (segment 相対)。
+    /// `[label](url)` の URL や `<url>` autolink、GFM bare autolink を含む。
+    /// URL 内の `?` を textlint と同様に lint 対象外にするための除外範囲。
+    pub link_url_ranges: Vec<(usize, usize)>,
 }
 
 #[derive(Debug, Clone)]
@@ -192,6 +196,15 @@ fn push_segment<'a>(
             text.len(),
             &mut code_ranges,
         );
+        let mut link_url_ranges = Vec::new();
+        collect_link_url_ranges(
+            node,
+            source,
+            line_starts,
+            start_byte,
+            text.len(),
+            &mut link_url_ranges,
+        );
         out.push(TextSegment {
             text,
             start_byte,
@@ -200,6 +213,7 @@ fn push_segment<'a>(
             kind,
             in_block_quote,
             code_ranges,
+            link_url_ranges,
         });
     }
 }
@@ -231,6 +245,81 @@ fn collect_code_ranges<'a>(
             out.push((rel_start, rel_end));
         }
     }
+}
+
+/// block ノード配下の `Link` / `Image` ノードを集め、URL 部分の segment 相対 byte 範囲を返す。
+/// `[label](url)` / `![alt](url)` / `<url>` / GFM bare autolink を扱う。
+fn collect_link_url_ranges<'a>(
+    node: &'a AstNode<'a>,
+    source: &str,
+    line_starts: &[usize],
+    seg_start: usize,
+    seg_len: usize,
+    out: &mut Vec<(usize, usize)>,
+) {
+    for descendant in node.descendants() {
+        let data = descendant.data.borrow();
+        let is_image = matches!(data.value, NodeValue::Image(_));
+        let is_link = matches!(data.value, NodeValue::Link(_));
+        if !is_link && !is_image {
+            continue;
+        }
+        let pos = data.sourcepos;
+        let abs_start = byte_offset_start(source, line_starts, pos.start.line, pos.start.column);
+        let abs_end = byte_offset_end_exclusive(source, line_starts, pos.end.line, pos.end.column);
+        if abs_end <= abs_start || abs_start < seg_start {
+            continue;
+        }
+        let link_src = &source[abs_start..abs_end];
+        // Image は構文全体 (先頭 `!` 含む) を除外。alt text の取り扱いは upstream と差分が出るが、
+        // 実用上 alt に `?`/`!` を含む例は稀で、誤検知の方が問題になる。
+        let range = if is_image {
+            Some((0, link_src.len()))
+        } else {
+            extract_url_range(link_src)
+        };
+        let Some((us, ue)) = range else {
+            continue;
+        };
+        let rel_start = (abs_start + us).saturating_sub(seg_start);
+        let rel_end = ((abs_start + ue).saturating_sub(seg_start)).min(seg_len);
+        if rel_start < rel_end {
+            out.push((rel_start, rel_end));
+        }
+    }
+}
+
+/// Link/Image の sourcepos slice から URL 部分の (start, end) byte offset を返す。
+/// inline link `[label](url)` と image `![alt](url)` は `](` 以降 `)` 直前まで。
+/// angle autolink `<url>` は `<` と `>` の間。
+/// GFM bare autolink は slice 全体が URL。
+/// reference link `[a][r]` 等 URL が inline source に出ないものは `None`。
+pub(crate) fn extract_url_range(s: &str) -> Option<(usize, usize)> {
+    if s.is_empty() {
+        return None;
+    }
+    let bytes = s.as_bytes();
+    if bytes.first() == Some(&b'<') && bytes.last() == Some(&b'>') && s.len() >= 2 {
+        return Some((1, s.len() - 1));
+    }
+    if bytes.last() == Some(&b')')
+        && let Some(open) = s.rfind("](")
+    {
+        let url_start = open + 2;
+        let url_end = s.len() - 1;
+        if url_start < url_end {
+            return Some((url_start, url_end));
+        }
+    }
+    if s.starts_with("http://")
+        || s.starts_with("https://")
+        || s.starts_with("ftp://")
+        || s.starts_with("www.")
+        || s.starts_with("mailto:")
+    {
+        return Some((0, s.len()));
+    }
+    None
 }
 
 fn collect<'a>(
@@ -320,5 +409,64 @@ fn collect<'a>(
             line_starts,
             out,
         );
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn extract_url_range_angle_autolink() {
+        let s = "<https://x.test/a?b=1>";
+        let (us, ue) = extract_url_range(s).unwrap();
+        assert_eq!(&s[us..ue], "https://x.test/a?b=1");
+    }
+
+    #[test]
+    fn extract_url_range_inline_link() {
+        let s = "[label](https://x.test/?z=1)";
+        let (us, ue) = extract_url_range(s).unwrap();
+        assert_eq!(&s[us..ue], "https://x.test/?z=1");
+    }
+
+    #[test]
+    fn extract_url_range_label_with_bracket_uses_rightmost() {
+        // label に `]` を含むケースは rfind("](") が右端を採用する
+        let s = "[a]b](https://x.test/?q=1)";
+        let (us, ue) = extract_url_range(s).unwrap();
+        assert_eq!(&s[us..ue], "https://x.test/?q=1");
+    }
+
+    #[test]
+    fn extract_url_range_url_with_balanced_paren() {
+        let s = "[a](http://x.test/(y))";
+        let (us, ue) = extract_url_range(s).unwrap();
+        assert_eq!(&s[us..ue], "http://x.test/(y)");
+    }
+
+    #[test]
+    fn extract_url_range_image() {
+        let s = "![alt](/p/q.png?x=1)";
+        let (us, ue) = extract_url_range(s).unwrap();
+        assert_eq!(&s[us..ue], "/p/q.png?x=1");
+    }
+
+    #[test]
+    fn extract_url_range_bare_autolink() {
+        let s = "https://x.test/?z=1";
+        let (us, ue) = extract_url_range(s).unwrap();
+        assert_eq!(&s[us..ue], "https://x.test/?z=1");
+    }
+
+    #[test]
+    fn extract_url_range_reference_link_returns_none() {
+        // [a][r] は URL が inline source に出てこない
+        assert_eq!(extract_url_range("[a][r]"), None);
+    }
+
+    #[test]
+    fn extract_url_range_empty_returns_none() {
+        assert_eq!(extract_url_range(""), None);
     }
 }

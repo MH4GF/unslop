@@ -15,6 +15,7 @@ use unslop::rules::ai_writing::ai_tech_writing_guideline::AiTechWritingGuideline
 use unslop::rules::ai_writing::no_ai_emphasis_patterns::NoAiEmphasisPatterns;
 use unslop::rules::ai_writing::no_ai_hype_expressions::NoAiHypeExpressions;
 use unslop::rules::ai_writing::no_ai_list_formatting::NoAiListFormatting;
+use unslop::rules::jt::no_exclamation_question_mark::NoExclamationQuestionMark;
 use unslop::rules::jt::no_nfd::NoNfd;
 use unslop::rules::unslop::no_mid_sentence_break::NoMidSentenceBreak;
 
@@ -261,6 +262,13 @@ fn no_nfd() {
     let suites = load_suite("jt/no-nfd.json");
     let report = check_suite(&NoNfd, suites);
     report.assert_clean("no-nfd");
+}
+
+#[test]
+fn no_exclamation_question_mark() {
+    let suites = load_suite("jt/no-exclamation-question-mark.json");
+    let report = check_suite(&NoExclamationQuestionMark, suites);
+    report.assert_clean("no-exclamation-question-mark");
 }
 
 #[test]
