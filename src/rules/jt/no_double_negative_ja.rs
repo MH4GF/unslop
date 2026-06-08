@@ -295,6 +295,7 @@ impl Rule for NoDoubleNegativeJa {
                                 line,
                                 column,
                                 severity: Severity::Error,
+                                fix: None,
                             });
                             state = 0;
                         }

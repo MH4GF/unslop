@@ -40,6 +40,7 @@ impl Rule for MaxComma {
                         line,
                         column,
                         severity: Severity::Error,
+                        fix: None,
                     });
                 }
             }

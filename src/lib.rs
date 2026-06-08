@@ -1,5 +1,6 @@
 pub mod config;
 pub mod document;
+mod fixer;
 pub mod morph;
 pub mod rule;
 pub mod rules;
@@ -8,7 +9,8 @@ use std::path::Path;
 
 use crate::config::TextlintRc;
 use crate::document::Document;
-use crate::rule::{Issue, Rule};
+use crate::fixer::{MAX_PASSES, apply_fixes};
+use crate::rule::{ByteRange, Issue, Rule};
 
 pub fn build_rules(rc: &TextlintRc, base_dir: &Path) -> Vec<Box<dyn Rule>> {
     let mut out: Vec<Box<dyn Rule>> = Vec::new();
@@ -145,4 +147,72 @@ pub fn lint(source: &str, rules: &[Box<dyn Rule>]) -> Vec<Issue> {
     }
     all.sort_by_key(|a| (a.line, a.column));
     all
+}
+
+#[derive(Debug, Clone)]
+pub struct AppliedFix {
+    pub rule_id: String,
+    pub range: ByteRange,
+    pub replacement: String,
+    pub pass: usize,
+}
+
+#[derive(Debug, Clone)]
+pub struct FixResult {
+    pub fixed_source: String,
+    pub applied_fixes: Vec<AppliedFix>,
+    pub remaining_issues: Vec<Issue>,
+    pub passes: usize,
+    pub hit_max_passes: bool,
+}
+
+pub fn fix(source: &str, rules: &[Box<dyn Rule>]) -> FixResult {
+    let mut current = source.to_string();
+    let mut applied_fixes: Vec<AppliedFix> = Vec::new();
+    let mut passes = 0;
+    let mut hit_max = false;
+
+    loop {
+        passes += 1;
+        let issues = lint(&current, rules);
+        let pending: Vec<(String, crate::rule::Fix)> = issues
+            .iter()
+            .filter_map(|i| i.fix.clone().map(|f| (i.rule_id.clone(), f)))
+            .collect();
+        if pending.is_empty() {
+            break;
+        }
+        let fixes: Vec<crate::rule::Fix> = pending.iter().map(|(_, f)| f.clone()).collect();
+        let (next, applied, _dropped) = apply_fixes(&current, &fixes);
+        if applied.is_empty() {
+            break;
+        }
+        for af in &applied {
+            let rid = pending
+                .iter()
+                .find(|(_, f)| f.range == af.range && f.replacement == af.replacement)
+                .map(|(rid, _)| rid.clone())
+                .unwrap_or_default();
+            applied_fixes.push(AppliedFix {
+                rule_id: rid,
+                range: af.range.clone(),
+                replacement: af.replacement.clone(),
+                pass: passes,
+            });
+        }
+        current = next;
+        if passes >= MAX_PASSES {
+            hit_max = true;
+            break;
+        }
+    }
+
+    let remaining_issues = lint(&current, rules);
+    FixResult {
+        fixed_source: current,
+        applied_fixes,
+        remaining_issues,
+        passes,
+        hit_max_passes: hit_max,
+    }
 }

@@ -72,6 +72,7 @@ impl Rule for $type_name {
                 continue;
             }
             // TODO: implement
+            // auto-fix 対応するなら: Issue::new(...).with_fix(Fix { range, replacement })
             let _ = seg;
         }
         issues

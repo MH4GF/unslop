@@ -48,6 +48,7 @@ impl Rule for NoDoubledConjunction {
                             line,
                             column,
                             severity: Severity::Error,
+                            fix: None,
                         });
                     }
                     prev_conjunction = Some(conj.surface.clone());

@@ -10,7 +10,7 @@ use std::fs;
 use std::path::PathBuf;
 
 use unslop::config::TextlintRc;
-use unslop::lint;
+use unslop::{fix, lint};
 
 fn fixtures_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/golden/fixtures")
@@ -124,4 +124,47 @@ fn thermo_nuclear_skill() {
 #[test]
 fn empirical_prompt_tuning_skill() {
     assert_coverage("empirical-prompt-tuning-skill", 16, 18);
+}
+
+const FIXABLE_RULES: &[&str] = &[
+    "prh",
+    "no-zero-width-spaces",
+    "no-nfd",
+    "no-invalid-control-character",
+    "no-hankaku-kana",
+];
+
+#[test]
+fn auto_fix_basics() {
+    let fixture = fixtures_dir().join("auto-fix-basics.md");
+    let expected = expected_dir().join("auto-fix-basics.fixed.md");
+    let source = fs::read_to_string(&fixture).expect("read fixture");
+    let expected_fixed = fs::read_to_string(&expected).expect("read expected");
+
+    let config_path = textlint_config();
+    let base_dir = config_path.parent().unwrap().to_path_buf();
+    let rc = TextlintRc::from_path(&config_path).expect("load textlintrc");
+    let rules = unslop::build_rules(&rc, &base_dir);
+
+    let result = fix(&source, &rules);
+    assert_eq!(
+        result.fixed_source, expected_fixed,
+        "fixed_source does not match expected"
+    );
+    assert!(
+        result.passes <= 5,
+        "should converge within a few passes, got {} pass",
+        result.passes
+    );
+    assert!(
+        !result.applied_fixes.is_empty(),
+        "expected fixes to be applied"
+    );
+    for issue in &result.remaining_issues {
+        assert!(
+            !FIXABLE_RULES.contains(&issue.rule_id.as_str()),
+            "fixable rule {} should not remain in remaining_issues: {issue:?}",
+            issue.rule_id
+        );
+    }
 }

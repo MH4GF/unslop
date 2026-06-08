@@ -45,6 +45,7 @@ impl Rule for MaxTen {
                         line,
                         column,
                         severity: Severity::Error,
+                        fix: None,
                     });
                 }
             }

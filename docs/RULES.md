@@ -5,45 +5,45 @@ simplified なものは upstream の挙動と部分的に異なる。詳細は [
 
 ## preset-ai-writing
 
-| rule | 実装 | simplified | compat test |
-|------|:----:|:----------:|:-----------:|
-| no-ai-emphasis-patterns | ✅ | - | ✅ |
-| no-ai-hype-expressions | ✅ | - | ✅ |
-| no-ai-list-formatting | ✅ | - | ✅ |
-| ai-tech-writing-guideline | ✅ | サマリレポート位置が最後の paragraph | ✅ |
-| no-ai-colon-continuation | ✅ | 構造判定を segment 隣接で近似 (Document AST 不使用) | - |
+| rule | 実装 | auto-fix | simplified | compat test |
+|------|:----:|:--------:|:----------:|:-----------:|
+| no-ai-emphasis-patterns | ✅ | - | - | ✅ |
+| no-ai-hype-expressions | ✅ | - | - | ✅ |
+| no-ai-list-formatting | ✅ | - | - | ✅ |
+| ai-tech-writing-guideline | ✅ | - | サマリレポート位置が最後の paragraph | ✅ |
+| no-ai-colon-continuation | ✅ | - | 構造判定を segment 隣接で近似 (Document AST 不使用) | - |
 
 upstream: <https://github.com/textlint-ja/textlint-rule-preset-ai-writing>
 
 ## preset-ja-technical-writing
 
-| rule | 実装 | simplified | compat test |
-|------|:----:|:----------:|:-----------:|
-| sentence-length | ✅ | char 数で測定 (textlint は markup 剥がし後の length) | - |
-| max-comma | ✅ | sentence-splitter 不使用 (改行と句点で split) | - |
-| max-ten | ✅ | sentence-splitter 不使用 / 括弧内例外なし | - |
-| ja-no-mixed-period | ❌ | config で disable 済 | - |
-| no-mix-dearu-desumasu | ✅ | 末尾文字判定のみ。multi-section の preference 未対応 | - |
-| no-doubled-conjunction | ✅ | sentence-splitter 不使用 | - |
-| no-doubled-joshi | ✅ | 例外パターン主要 4 個のみ (の/を/て/並立) | - |
-| no-double-negative-ja | ✅ | 主要 8 patterns | - |
-| no-zero-width-spaces | ✅ | - | - |
-| no-hankaku-kana | ✅ | - | - |
-| no-nfd | ✅ | - | ✅ |
-| no-invalid-control-character | ✅ | options (checkCode/checkImage) 未対応 | - |
-| no-exclamation-question-mark | ✅ | options (allow*Mark) 未対応 / `Yahoo!` のみ allow | - |
-| ja-unnatural-alphabet | ✅ | サロゲートペア未対応 / allowCommonCase 未対応 | - |
-| no-unmatched-pair | ✅ | sentence-splitter 不使用 / pair list は upstream と同じ | - |
-| no-dropping-the-ra | ❌ | 公式 repo 不明 | - |
+| rule | 実装 | auto-fix | simplified | compat test |
+|------|:----:|:--------:|:----------:|:-----------:|
+| sentence-length | ✅ | - | char 数で測定 (textlint は markup 剥がし後の length) | - |
+| max-comma | ✅ | - | sentence-splitter 不使用 (改行と句点で split) | - |
+| max-ten | ✅ | - | sentence-splitter 不使用 / 括弧内例外なし | - |
+| ja-no-mixed-period | ❌ | - | config で disable 済 | - |
+| no-mix-dearu-desumasu | ✅ | - | 末尾文字判定のみ。multi-section の preference 未対応 | - |
+| no-doubled-conjunction | ✅ | - | sentence-splitter 不使用 | - |
+| no-doubled-joshi | ✅ | - | 例外パターン主要 4 個のみ (の/を/て/並立) | - |
+| no-double-negative-ja | ✅ | - | 主要 8 patterns | - |
+| no-zero-width-spaces | ✅ | ✅ | - | - |
+| no-hankaku-kana | ✅ | ✅ | NFKC で全角化 (濁点・半濁点も結合) | - |
+| no-nfd | ✅ | ✅ | - | ✅ |
+| no-invalid-control-character | ✅ | ✅ | options (checkCode/checkImage) 未対応 | - |
+| no-exclamation-question-mark | ✅ | - | options (allow*Mark) 未対応 / `Yahoo!` のみ allow | - |
+| ja-unnatural-alphabet | ✅ | - | サロゲートペア未対応 / allowCommonCase 未対応 | - |
+| no-unmatched-pair | ✅ | - | sentence-splitter 不使用 / pair list は upstream と同じ | - |
+| no-dropping-the-ra | ❌ | - | 公式 repo 不明 | - |
 
 `compat test` 列は `tests/compat.rs` で exact match を取れているもの。
 それ以外は `tests/golden.rs` の粗粒度差分 + 手動検証で担保している。
 
 ## prh
 
-| rule | 実装 | simplified |
-|------|:----:|:----------:|
-| prh | ✅ | YAML の `version: 1` + `rules: [{ expected, pattern }]` 形式のみ。`$1` 置換と複数 YAML import は未対応 |
+| rule | 実装 | auto-fix | simplified |
+|------|:----:|:--------:|:----------:|
+| prh | ✅ | ✅ | YAML の `version: 1` + `rules: [{ expected, pattern }]` 形式のみ。`$1` 置換と複数 YAML import は未対応。auto-fix は本家準拠で case merge (lower/upper/title) を行う |
 
 ## unslop-original (textlint 非対応)
 
@@ -63,3 +63,9 @@ textlint に対応 rule がない unslop 独自の防波堤。`.textlintrc.json`
 | `prh.rulePaths` (相対パス) | ✅ |
 | preset 子 rule の bool 無効化 (`{ "rule-name": false }`) | ✅ |
 | その他の rule options (allow 等) | ❌ |
+
+## auto-fix の実装基準
+
+unslop が `--fix` で書き戻す対象は「機械的に決まる安全な置換のみ」とする。
+意味解釈や文の再構築を要する rule (sentence-length, max-comma, no-mix-dearu-desumasu 等) を検出のみとする。
+連鎖適用を `MAX_PASSES = 10` の loop で行う。overlap した fix は両方 drop して次 pass に委ねる。

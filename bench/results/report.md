@@ -203,7 +203,30 @@ Phase 1b 以降に integration test を追加する。
 `UNSLOP_GUARD=off` で無効化、`UNSLOP_BIN=<path>` でバイナリ位置を override できる。
 バイナリ場所 (固定): `/Users/mh4gf/ghq/github.com/MH4GF/unslop/target/release/unslop`。
 
-## 7. ベンチハーネス
+## 7c. Phase 1c — auto-fix CLI と hook 連携
+
+`unslop --fix` を追加し、PostToolUse hook で機械的に決まる違反を自動修正する経路を整備した。
+対応する rule は次の 5 つ。
+
+- prh (本家準拠の case merge を実装)
+- no-zero-width-spaces (U+200B 削除)
+- no-nfd (NFC 正規化)
+- no-invalid-control-character (制御文字削除)
+- no-hankaku-kana (NFKC で全角化、濁点・半濁点も結合)
+
+連鎖適用は `MAX_PASSES = 10` の loop で行う。
+1 pass 内で overlap する fix を検出したら両方 drop し、次 pass の再 lint に委ねる。
+`Issue` 構造体に `fix: Option<Fix>` を追加した。fix 未対応 rule は constructor 既定値の `None` を返す。
+
+CLI の追加フラグ。
+
+- `--fix` — `unslop::fix()` を呼びファイルへ書き戻す
+- `--fix-dry-run` — fix simulation のみ。stderr にサマリ
+
+hook 切替手順は `.claude/tmp/hook-diff.md` に unified diff として置く想定。
+`UNSLOP_FIX=off` で従来の検出のみ動作へ退避できる経路を残す方針。
+
+## 8. ベンチハーネス
 
 - スクリプト: `bench/run.sh [baseline|per-rule|all]`
 - fixture: `bench/fixtures/{empty,small,medium,large}.md` (claude-code repo の実 md を凍結)

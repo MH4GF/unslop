@@ -111,6 +111,7 @@ fn emoji_emphasis_issues(
             line,
             column,
             severity: Severity::Error,
+            fix: None,
         });
         start_from = e.max(s + 1);
     }
@@ -153,6 +154,7 @@ fn info_prefix_issues(
                 line,
                 column,
                 severity: Severity::Error,
+                fix: None,
             });
         }
         start_from = e.max(s + 1);
@@ -174,6 +176,7 @@ fn heading_emphasis_issues(doc: &Document, seg: &crate::document::TextSegment) -
             line,
             column,
             severity: Severity::Error,
+            fix: None,
         });
         start_from = e.max(s + 1);
     }

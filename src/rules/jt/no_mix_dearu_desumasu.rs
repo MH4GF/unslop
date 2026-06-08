@@ -75,6 +75,7 @@ impl Rule for NoMixDearuDesumasu {
                         line,
                         column,
                         severity: Severity::Error,
+                        fix: None,
                     });
                 }
             }

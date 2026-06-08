@@ -119,6 +119,7 @@ impl Rule for NoUnmatchedPair {
                         line,
                         column,
                         severity: Severity::Error,
+                        fix: None,
                     });
                 }
             }

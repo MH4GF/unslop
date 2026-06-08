@@ -4,7 +4,7 @@ use fancy_regex::Regex;
 use once_cell::sync::Lazy;
 
 use crate::document::Document;
-use crate::rule::{Issue, Rule, Severity};
+use crate::rule::{Fix, Issue, Rule, Severity};
 use crate::rules::is_str_bearing;
 
 const RULE_ID: &str = "no-invalid-control-character";
@@ -83,16 +83,41 @@ impl Rule for NoInvalidControlCharacter {
                 let name = name_of(c);
                 let esc = unicode_escape(c);
                 let (line, column) = doc.pos_at(seg, s);
-                issues.push(Issue {
-                    rule_id: RULE_ID.to_string(),
-                    message: format!("Found invalid control character({name} {esc})"),
-                    line,
-                    column,
-                    severity: Severity::Error,
-                });
+                let abs_start = seg.start_byte + s;
+                let abs_end = seg.start_byte + e;
+                issues.push(
+                    Issue::new(
+                        RULE_ID,
+                        format!("Found invalid control character({name} {esc})"),
+                        line,
+                        column,
+                        Severity::Error,
+                    )
+                    .with_fix(Fix {
+                        range: abs_start..abs_end,
+                        replacement: String::new(),
+                    }),
+                );
                 from = e.max(s + 1);
             }
         }
         issues
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fix_deletes_control_char() {
+        let src = "hello\u{0007}world";
+        let doc = Document::parse(src);
+        let issues = NoInvalidControlCharacter.check(&doc);
+        assert_eq!(issues.len(), 1);
+        let f = issues[0].fix.clone().unwrap();
+        let mut buf = src.to_string();
+        buf.replace_range(f.range, &f.replacement);
+        assert_eq!(buf, "helloworld");
     }
 }

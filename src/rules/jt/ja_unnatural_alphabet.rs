@@ -45,6 +45,7 @@ impl Rule for JaUnnaturalAlphabet {
                         line,
                         column,
                         severity: Severity::Error,
+                        fix: None,
                     });
                 }
                 from = (alpha_start + 1).max(from + 1);

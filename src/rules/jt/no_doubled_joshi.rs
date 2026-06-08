@@ -50,6 +50,7 @@ impl Rule for NoDoubledJoshi {
                         line,
                         column,
                         severity: Severity::Error,
+                        fix: None,
                     });
                 }
             }

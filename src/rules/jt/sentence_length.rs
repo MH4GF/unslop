@@ -64,6 +64,7 @@ impl Rule for SentenceLength {
                             line,
                             column,
                             severity: Severity::Error,
+                            fix: None,
                         });
                     }
                     sentence_start = e;

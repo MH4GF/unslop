@@ -67,6 +67,7 @@ impl Rule for NoAiColonContinuation {
                 line,
                 column,
                 severity: Severity::Error,
+                fix: None,
             });
         }
         issues

@@ -65,6 +65,7 @@ impl Rule for NoAiListFormatting {
                     line,
                     column,
                     severity: Severity::Error,
+                    fix: None,
                 });
             }
 
@@ -81,6 +82,7 @@ impl Rule for NoAiListFormatting {
                     line,
                     column,
                     severity: Severity::Error,
+                    fix: None,
                 });
             }
         }

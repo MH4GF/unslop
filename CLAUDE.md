@@ -22,6 +22,14 @@ PostToolUse hook で textlint の代替として 15-25x 高速化する用途で
 4. `tests/golden/fixtures/` に該当 rule がトリガーする md を追加
 5. `scripts/regen-golden.sh` で expected を再生成し、`cargo test --test golden` で floor/ceiling を baseline 化
 
+## auto-fix を追加するときの手順
+
+1. 置換が機械的に決まる rule のみ対象とする (sentence-length など意味解釈は対象外)
+2. `check` 内で `Issue::new(...).with_fix(Fix { range, replacement })` を chain する
+3. `range` は source 全体の absolute byte offset (`seg.start_byte + rel_offset` で得る)
+4. 1 match で最も保守的な単一 fix を出す。連鎖は `lib::fix()` の loop が捌く
+5. `tests/golden/fixtures/auto-fix-basics.md` に該当 rule のトリガーを追加し、expected source も更新する
+
 ## textlint との互換性方針
 
 - **完全一致を目指さない**。message・line は寄せるが、column / 数値 / sentence-split 位置は simplified を許容する

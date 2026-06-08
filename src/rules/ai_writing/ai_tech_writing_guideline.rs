@@ -184,6 +184,7 @@ impl Rule for AiTechWritingGuideline {
                         line,
                         column,
                         severity: Severity::Error,
+                        fix: None,
                     });
                     let idx = p.category as usize;
                     metrics[idx] += 1;
@@ -216,6 +217,7 @@ impl Rule for AiTechWritingGuideline {
                 line,
                 column,
                 severity: Severity::Error,
+                fix: None,
             });
         }
 

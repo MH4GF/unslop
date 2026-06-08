@@ -5,7 +5,7 @@
 //! index 0 (先頭文字) は skip し、前文字と合わせて NFC 正規化候補を提示する。
 
 use crate::document::Document;
-use crate::rule::{Issue, Rule, Severity};
+use crate::rule::{Fix, Issue, Rule, Severity};
 use crate::rules::is_str_bearing;
 use unicode_normalization::UnicodeNormalization;
 
@@ -45,19 +45,45 @@ impl Rule for NoNfd {
                         .collect();
                     let nfc: String = normalized_pair.nfc().collect();
                     let (line, column) = doc.pos_at(seg, i);
-                    issues.push(Issue {
-                            rule_id: RULE_ID.to_string(),
-                            message: format!(
+                    let abs_start = seg.start_byte + pi;
+                    let abs_end = seg.start_byte + i + c.len_utf8();
+                    issues.push(
+                        Issue::new(
+                            RULE_ID,
+                            format!(
                                 "Disallow to use NFD(well-known as UTF8-MAC 濁点): \"{pair}\" => \"{nfc}\""
                             ),
                             line,
                             column,
-                            severity: Severity::Error,
-                        });
+                            Severity::Error,
+                        )
+                        .with_fix(Fix {
+                            range: abs_start..abs_end,
+                            replacement: nfc,
+                        }),
+                    );
                 }
                 prev = Some((i, c));
             }
         }
         issues
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fix_replaces_nfd_pair() {
+        // ホ + ゚ (NFD) → ポ (NFC)
+        let src = "ホ\u{309A}ケット";
+        let doc = Document::parse(src);
+        let issues = NoNfd.check(&doc);
+        assert_eq!(issues.len(), 1);
+        let f = issues[0].fix.clone().unwrap();
+        let mut buf = src.to_string();
+        buf.replace_range(f.range, &f.replacement);
+        assert_eq!(buf, "ポケット");
     }
 }

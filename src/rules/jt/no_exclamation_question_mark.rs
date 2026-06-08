@@ -47,6 +47,7 @@ impl Rule for NoExclamationQuestionMark {
                             line,
                             column,
                             severity: Severity::Error,
+                            fix: None,
                         });
                     }
                     from = e.max(s + 1);

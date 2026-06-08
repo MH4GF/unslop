@@ -67,6 +67,7 @@ impl Rule for NoMidSentenceBreak {
                             line,
                             column,
                             severity: Severity::Error,
+                            fix: None,
                         });
                     }
                     continue;
