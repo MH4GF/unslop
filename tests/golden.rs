@@ -118,12 +118,15 @@ fn claude_code_readme() {
 
 #[test]
 fn thermo_nuclear_skill() {
-    assert_coverage("thermo-nuclear-skill", 15, 3);
+    // ai-tech-writing-guideline summary 削除で unslop-only が 1 減る
+    assert_coverage("thermo-nuclear-skill", 15, 2);
 }
 
 #[test]
 fn empirical_prompt_tuning_skill() {
-    assert_coverage("empirical-prompt-tuning-skill", 16, 18);
+    // no-ai-list-formatting の bold-colon 検出を廃止したため common が大幅に下がる。
+    // textlint-only は colon 検出由来 13 件と既存 prh のみが残る。
+    assert_coverage("empirical-prompt-tuning-skill", 3, 14);
 }
 
 const FIXABLE_RULES: &[&str] = &[
