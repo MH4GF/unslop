@@ -1,6 +1,7 @@
 pub mod config;
 pub mod document;
 mod fixer;
+pub mod log;
 pub mod morph;
 pub mod rule;
 pub mod rules;

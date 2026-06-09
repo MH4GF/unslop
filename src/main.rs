@@ -1,9 +1,11 @@
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
+use std::time::Instant;
 
 use clap::Parser;
 
 use unslop::config::TextlintRc;
+use unslop::log::{Mode, RunStats, maybe_write};
 use unslop::rule::{Issue, Severity};
 
 #[derive(Parser, Debug)]
@@ -47,6 +49,7 @@ fn print_issue(file: &Path, issue: &Issue) {
 }
 
 fn main() -> ExitCode {
+    let started = Instant::now();
     let cli = Cli::parse();
     let config_path = cli
         .config
@@ -56,15 +59,35 @@ fn main() -> ExitCode {
         .map(|p| p.to_path_buf())
         .unwrap_or_else(|| PathBuf::from("."));
 
+    let files: Vec<String> = cli.files.iter().map(|p| p.display().to_string()).collect();
+
     let rc = match TextlintRc::from_path(&config_path) {
         Ok(rc) => rc,
         Err(e) => {
             eprintln!("[unslop] cannot load config {}: {e}", config_path.display());
+            let stats = RunStats {
+                files,
+                mode: Mode::Lint,
+                ..Default::default()
+            };
+            maybe_write(&stats, 2, started.elapsed());
             return ExitCode::from(2);
         }
     };
 
     let rules = unslop::build_rules(&rc, &base_dir);
+
+    let mut stats = RunStats {
+        files,
+        mode: if cli.fix_dry_run {
+            Mode::FixDryRun
+        } else if cli.fix {
+            Mode::Fix
+        } else {
+            Mode::Lint
+        },
+        ..Default::default()
+    };
 
     let mut had_lint_err = false;
     let mut had_io_err = false;
@@ -107,6 +130,10 @@ fn main() -> ExitCode {
                     file.display()
                 );
             }
+            stats.fixes_applied += applied_count as u64;
+            for af in &result.applied_fixes {
+                *stats.fixes_per_rule.entry(af.rule_id.clone()).or_default() += 1;
+            }
             result.remaining_issues
         } else {
             unslop::lint(&src, &rules)
@@ -115,16 +142,25 @@ fn main() -> ExitCode {
         for issue in &issues {
             print_issue(file, issue);
         }
+        stats.remaining_issues += issues.len() as u64;
+        for i in &issues {
+            *stats
+                .remaining_per_rule
+                .entry(i.rule_id.clone())
+                .or_default() += 1;
+        }
         if !issues.is_empty() {
             had_lint_err = true;
         }
     }
 
-    if had_io_err {
-        ExitCode::from(2)
+    let exit = if had_io_err {
+        2u8
     } else if had_lint_err {
-        ExitCode::from(1)
+        1u8
     } else {
-        ExitCode::from(0)
-    }
+        0u8
+    };
+    maybe_write(&stats, exit, started.elapsed());
+    ExitCode::from(exit)
 }
