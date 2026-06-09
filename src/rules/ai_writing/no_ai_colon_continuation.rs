@@ -58,6 +58,14 @@ impl Rule for NoAiColonContinuation {
                 Some(b) => b,
                 None => continue,
             };
+            let colon_end = colon_byte + colon_char.len();
+            let in_code = seg
+                .code_ranges
+                .iter()
+                .any(|&(cs, ce)| colon_byte < ce && cs < colon_end);
+            if in_code {
+                continue;
+            }
             let (line, column) = doc.pos_at(seg, colon_byte);
             issues.push(Issue {
                 rule_id: RULE_ID.to_string(),
@@ -82,4 +90,31 @@ fn is_english_only(s: &str) -> bool {
     trimmed
         .chars()
         .all(|c| c.is_ascii_alphanumeric() || matches!(c, ' ' | '-' | '_' | '.'))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn messages(src: &str) -> Vec<String> {
+        let doc = Document::parse(src);
+        NoAiColonContinuation
+            .check(&doc)
+            .into_iter()
+            .map(|i| i.message)
+            .collect()
+    }
+
+    #[test]
+    fn predicate_colon_detected() {
+        let src = "次の手順を実行します:\n\n- ステップ1\n- ステップ2\n";
+        assert_eq!(messages(src).len(), 1);
+    }
+
+    #[test]
+    fn predicate_colon_in_code_span_skipped() {
+        // 段落末のコロンが inline code span 内にある場合は検出しない
+        let src = "次の関数を実装します `next_step():`\n\n- ステップ1\n- ステップ2\n";
+        assert!(messages(src).is_empty());
+    }
 }

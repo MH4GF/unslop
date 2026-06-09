@@ -98,6 +98,16 @@ impl Rule for NoUnmatchedPair {
                 let mut stack: Vec<(usize, &Pair)> = Vec::new();
                 let mut i = 0usize;
                 for c in s_text.chars() {
+                    let char_start = s_start + i;
+                    let char_end = char_start + c.len_utf8();
+                    let in_code = seg
+                        .code_ranges
+                        .iter()
+                        .any(|&(cs, ce)| char_start < ce && cs < char_end);
+                    if in_code {
+                        i += c.len_utf8();
+                        continue;
+                    }
                     let on_top_same_end = stack.last().map(|(_, p)| p.end == c).unwrap_or(false);
                     if on_top_same_end {
                         stack.pop();
@@ -144,4 +154,37 @@ fn split_sentences(text: &str) -> Vec<(usize, &str)> {
         out.push((start, &text[start..]));
     }
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn count(src: &str) -> usize {
+        let doc = Document::parse(src);
+        NoUnmatchedPair.check(&doc).len()
+    }
+
+    #[test]
+    fn unmatched_bracket_detected() {
+        assert!(count("これは「未閉のままです。\n") >= 1);
+    }
+
+    #[test]
+    fn paren_in_code_span_skipped() {
+        // inline code span 内の `(` は外側文の収支に影響しない
+        assert_eq!(count("関数 `foo(` を呼び出します。\n"), 0);
+    }
+
+    #[test]
+    fn bracket_in_code_span_skipped() {
+        assert_eq!(count("コード `「未閉` を含むテキスト。\n"), 0);
+    }
+
+    #[test]
+    fn unmatched_outside_code_still_detected() {
+        // code span 外の未閉は引き続き検出
+        let src = "「未閉です `foo` 別文。\n";
+        assert!(count(src) >= 1);
+    }
 }
