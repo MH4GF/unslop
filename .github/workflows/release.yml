@@ -2,8 +2,8 @@ name: release
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -47,7 +47,7 @@ jobs:
 
   release:
     needs: build
-    if: startsWith(github.ref, 'refs/tags/')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -62,7 +62,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh release create "${GITHUB_REF_NAME}" \
-            --title "${GITHUB_REF_NAME}" \
+          tag="v$(TZ=Asia/Tokyo date +%Y.%m.%d.%H%M%S)"
+          gh release create "${tag}" \
+            --title "${tag}" \
+            --target "${GITHUB_SHA}" \
             --generate-notes \
             dist/*
