@@ -11,6 +11,7 @@ use unslop::rule::Issue;
 #[derive(Parser, Debug)]
 #[command(
     name = "unslop",
+    version,
     about = "Fast textlint-compatible Japanese writing linter"
 )]
 struct Cli {
