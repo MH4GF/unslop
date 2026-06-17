@@ -14,19 +14,36 @@ normalize() {
   python3 - "$1" <<'PY'
 import re, sys, pathlib
 src = pathlib.Path(sys.argv[1]).read_text(errors="replace")
+# 1. textlint の各エラーは "<line>:<col>  [✓ ]error/warning/info  <message>" で始まり、
+#    複数行 message が続き、最後に長い空白を挟んで rule 名で終わる。
+# 2. 開始行 (LINE_HEAD) を見つけてエントリ単位にまとめる。
+# 3. エントリ内の各行末で `\s{2,}<rule>$` を探し、最初に見つかったものを rule とする。
+LINE_HEAD = re.compile(r"\s*\d+:\d+\s+(?:✓\s+)?(error|warning|info)")
+TRAILING_RULE = re.compile(r"\s{2,}([\w@/\-\.]+)\s*$")
+SUMMARY = re.compile(r"^\s*(✖|✓)")
 entries = []
 for line in src.splitlines():
-    if re.match(r"\s*\d+:\d+\s+(error|warning|info)", line):
+    if LINE_HEAD.match(line):
         entries.append([line])
-    elif entries and not re.match(r"^\s*✖", line) and line.strip():
-        entries[-1].append(line)
+        continue
+    if not entries or SUMMARY.match(line) or not line.strip():
+        continue
+    entries[-1].append(line)
 out = []
 for parts in entries:
-    joined = " ".join(p.strip() for p in parts)
-    m = re.match(r"(\d+):(\d+)\s+(error|warning|info)\s+(.+?)\s{2,}([\w@/\-\.]+)\s*$", joined)
-    if not m:
+    head = parts[0]
+    m_head = re.match(r"\s*(\d+):(\d+)\s+(?:✓\s+)?(error|warning|info)", head)
+    if not m_head:
         continue
-    ln, col, sev, msg, rule = m.groups()
+    ln = m_head.group(1)
+    rule = None
+    for p in parts:
+        m_rule = TRAILING_RULE.search(p)
+        if m_rule:
+            rule = m_rule.group(1)
+            break
+    if not rule:
+        continue
     short = rule.rsplit("/", 1)[-1]
     out.append(f"L{ln} [{short}]")
 out.sort()
