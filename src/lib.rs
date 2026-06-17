@@ -120,6 +120,30 @@ pub fn build_rules(rc: &TextlintRc, base_dir: &Path) -> Vec<Box<dyn Rule>> {
     if rc.preset_child_enabled("preset-ja-technical-writing", "no-unmatched-pair") {
         out.push(Box::new(rules::jt::no_unmatched_pair::NoUnmatchedPair));
     }
+    if rc.preset_child_enabled("preset-ja-technical-writing", "ja-no-mixed-period") {
+        out.push(Box::new(rules::jt::ja_no_mixed_period::JaNoMixedPeriod));
+    }
+    if rc.preset_child_enabled("preset-ja-technical-writing", "ja-no-redundant-expression") {
+        out.push(Box::new(
+            rules::jt::ja_no_redundant_expression::JaNoRedundantExpression,
+        ));
+    }
+    if rc.preset_child_enabled("preset-ja-technical-writing", "ja-no-successive-word") {
+        out.push(Box::new(
+            rules::jt::ja_no_successive_word::JaNoSuccessiveWord,
+        ));
+    }
+    if rc.preset_child_enabled(
+        "preset-ja-technical-writing",
+        "no-doubled-conjunctive-particle-ga",
+    ) {
+        out.push(Box::new(
+            rules::jt::no_doubled_conjunctive_particle_ga::NoDoubledConjunctiveParticleGa,
+        ));
+    }
+    if rc.preset_child_enabled("preset-ja-technical-writing", "ja-no-abusage") {
+        out.push(Box::new(rules::jt::ja_no_abusage::JaNoAbusage));
+    }
 
     // unslop-original rule (textlint に該当 rule なし)。standalone gate で有効化する。
     if rc.rule_enabled("no-mid-sentence-break") {

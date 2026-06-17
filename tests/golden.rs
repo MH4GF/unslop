@@ -129,6 +129,16 @@ fn empirical_prompt_tuning_skill() {
     assert_coverage("empirical-prompt-tuning-skill", 3, 14);
 }
 
+#[test]
+fn jt_tech_writing_extras() {
+    // preset-ja-technical-writing 互換の追加 rule 5 件のカバレッジを baseline 化する。
+    // textlint expected は (line, rule_id) で 9 件: ja-no-mixed-period x1,
+    // ja-no-redundant-expression x1, no-doubled-conjunctive-particle-ga x1,
+    // ja-no-successive-word x1, ja-no-abusage x5。
+    // unslop は morpheme-match の column 差異で textlint-only が出る可能性を許容する。
+    assert_coverage("jt-tech-writing-extras", 7, 4);
+}
+
 const FIXABLE_RULES: &[&str] = &[
     "prh",
     "no-zero-width-spaces",

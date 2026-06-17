@@ -1,5 +1,6 @@
 L13 [max-comma]
 L21 [sentence-length]
+L23 [ja-no-mixed-period]
 L5 [sentence-length]
 L9 [max-comma]
 L9 [no-ai-list-formatting]

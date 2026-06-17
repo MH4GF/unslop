@@ -1,8 +1,13 @@
+pub mod ja_no_abusage;
+pub mod ja_no_mixed_period;
+pub mod ja_no_redundant_expression;
+pub mod ja_no_successive_word;
 pub mod ja_unnatural_alphabet;
 pub mod max_comma;
 pub mod max_ten;
 pub mod no_double_negative_ja;
 pub mod no_doubled_conjunction;
+pub mod no_doubled_conjunctive_particle_ga;
 pub mod no_doubled_joshi;
 pub mod no_exclamation_question_mark;
 pub mod no_hankaku_kana;
