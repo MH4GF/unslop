@@ -1,0 +1,6 @@
+L13 [ja-no-redundant-expression]
+L19 [ja-no-successive-word]
+L21 [ja-no-successive-word]
+L25 [no-doubled-conjunctive-particle-ga]
+L7 [ja-no-mixed-period]
+L9 [ja-no-mixed-period]

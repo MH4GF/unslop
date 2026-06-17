@@ -123,10 +123,24 @@ fn thermo_nuclear_skill() {
 }
 
 #[test]
+fn preset_ja_technical_writing_additions() {
+    // 新規追加 5 rule を trigger する fixture。
+    // textlint と共通: ja-no-redundant-expression 1 件 + ja-no-successive-word 2 件
+    //   + no-doubled-conjunctive-particle-ga 2 件 = common 5。
+    // unslop-only: ja-no-mixed-period 3 件 (textlint は paragraph 内の混在時のみ flag、
+    //   unslop は日本語段落の末尾 `.`/`．`/`:`/`：` を保守的に flag)、
+    //   no-doubled-joshi 2 件 (textlint との logic 差)、
+    //   ja-no-abusage 2 件 (upstream preset に含まれていない rule)、
+    //   ja-no-redundant-expression 1 件 (辞書差) = 8。
+    assert_coverage("preset-ja-technical-writing-additions", 5, 8);
+}
+
+#[test]
 fn empirical_prompt_tuning_skill() {
     // no-ai-list-formatting の bold-colon 検出を廃止したため common が大幅に下がる。
     // textlint-only は colon 検出由来 13 件と既存 prh のみが残る。
-    assert_coverage("empirical-prompt-tuning-skill", 3, 14);
+    // ja-no-mixed-period 追加で 1 件 unslop-only が増える (L16)。
+    assert_coverage("empirical-prompt-tuning-skill", 3, 15);
 }
 
 const FIXABLE_RULES: &[&str] = &[
