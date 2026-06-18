@@ -1,0 +1,6 @@
+L11 [ja-space-between-half-and-full-width]
+L3 [ja-no-space-between-full-width]
+L5 [ja-no-space-between-full-width]
+L7 [ja-no-space-between-full-width]
+L9 [ja-no-space-between-full-width]
+L9 [ja-space-between-half-and-full-width]

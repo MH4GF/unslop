@@ -145,6 +145,17 @@ pub fn build_rules(rc: &TextlintRc, base_dir: &Path) -> Vec<Box<dyn Rule>> {
         out.push(Box::new(rules::jt::ja_no_abusage::JaNoAbusage));
     }
 
+    if rc.preset_child_enabled("preset-ja-spacing", "ja-no-space-between-full-width") {
+        out.push(Box::new(
+            rules::ja_spacing::ja_no_space_between_full_width::JaNoSpaceBetweenFullWidth,
+        ));
+    }
+    if rc.preset_child_enabled("preset-ja-spacing", "ja-space-between-half-and-full-width") {
+        out.push(Box::new(
+            rules::ja_spacing::ja_space_between_half_and_full_width::JaSpaceBetweenHalfAndFullWidth,
+        ));
+    }
+
     // unslop-original rule (textlint に該当 rule なし)。standalone gate で有効化する。
     if rc.rule_enabled("no-mid-sentence-break") {
         out.push(Box::new(
