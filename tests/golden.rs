@@ -139,12 +139,23 @@ fn jt_tech_writing_extras() {
     assert_coverage("jt-tech-writing-extras", 7, 4);
 }
 
+#[test]
+fn ja_spacing_basics() {
+    // preset-ja-spacing 互換の 2 rule のカバレッジを baseline 化する。
+    // expected は (line, rule_id) で 6 件:
+    //   ja-no-space-between-full-width: L3, L5, L7, L9
+    //   ja-space-between-half-and-full-width: L9, L11
+    assert_coverage("ja-spacing-basics", 6, 0);
+}
+
 const FIXABLE_RULES: &[&str] = &[
     "prh",
     "no-zero-width-spaces",
     "no-nfd",
     "no-invalid-control-character",
     "no-hankaku-kana",
+    "ja-no-space-between-full-width",
+    "ja-space-between-half-and-full-width",
 ];
 
 #[test]

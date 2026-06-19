@@ -234,3 +234,23 @@ hook 切替手順は `.claude/tmp/hook-diff.md` に unified diff として置く
 - 再実行は `./bench/run.sh all` で約 4-5 分.
 
 Rust 実装の各 phase 完了時に `./bench/run.sh baseline` を unslop バイナリ向けに走らせ、本数字と比較する.
+
+## 9. preset-ja-spacing の MVP 2 rule
+
+MH-45 で preset-ja-spacing 互換の `ja_spacing/` グループを新設し、次の 2 rule を移植した。
+
+- `ja-no-space-between-full-width` — 全角どうしの間の半角スペース 1 文字を検出し、auto-fix で削除する。upstream どおりカタカナ複合語 (両側が `[ァ-ヶ]`) は例外として除外する
+- `ja-space-between-half-and-full-width` — 半角 (`[A-Za-z0-9]`) と全角が直接隣接した境界に半角スペース 1 文字を挿入する。`space: "always"` 相当の固定挙動で、`exceptPunctuation: true` のデフォルトを踏襲し `、。` 側は除外する
+
+upstream の `space: "never"` 系挙動と、preset 残りの 9 rule は MVP のスコープ外。
+
+両 rule とも形態素解析を使わず char 単位の判定で動く。
+
+bench 計測への影響は軽微の想定。claude-code 側 `.textlintrc.json` に preset-ja-spacing を含めていないため、unslop の bench 計測でも build_rules の gate が off となり、実 rule は走らない。
+
+### hook への反映手順
+
+- release バイナリを再ビルド: `cargo build --release`
+- PostToolUse hook (`~/.claude/hooks/unslop-guard.sh`) はバイナリ実体を参照するだけなので、hook 自体の編集は不要
+- `UNSLOP_BIN=<path>` を使って override している場合は新バイナリ位置へ向ける
+- 反映確認は適当な fixture へ書き込みを試して block 動作を見る

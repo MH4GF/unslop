@@ -17,3 +17,5 @@ redundant: これは省略することが可能である。
 abusage: ファイルは書きずらいので注意。
 
 abusage 2: try で例外を補足する書き方を直す。
+
+ja-spacing: あれは ダメ で、JTF標準 と書く。
