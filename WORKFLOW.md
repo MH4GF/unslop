@@ -8,7 +8,7 @@ tracker:
   required_labels: ["unslop"]
 
 workspace:
-  root: /Users/mh4gf/.symphony/workspaces/unslop
+  root: /Users/hermes/.symphony/workspaces/unslop
 
 hooks:
   after_create: |
@@ -20,8 +20,8 @@ agent:
   max_turns: 20
 
 codex:
-  command: claude
-  claude_args: ["--permission-mode", "auto"]
+  command: /Users/hermes/.local/bin/safe-claude
+  claude_args: ["--permission-mode", "bypassPermissions"]
   stall_timeout_ms: 600000
   turn_timeout_ms: 1800000
 ---
