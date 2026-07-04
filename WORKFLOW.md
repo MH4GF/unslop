@@ -13,7 +13,7 @@ workspace:
 hooks:
   after_create: |
     set -eu
-    git clone --depth 1 git@github.com:MH4GF/unslop.git .
+    git clone --depth 1 https://github.com/MH4GF/unslop.git .
 
 agent:
   max_concurrent_agents: 2
