@@ -45,15 +45,15 @@ MH4GF/unslop (Rust 製 textlint 互換 Japanese writing linter) の clone で作
 - issue が active state の間は turn を終わらせない。required permissions/secrets が missing で blocked の場合は除く。
 {% endif %}
 
-## Workflow protocol
+## ワークフロー手順
 
-- session 起動直後に `symphony-workflow` skill を呼ぶ。status routing / workpad 運用 / 実装 / sweep / `Human Review` 遷移 / land まで、進行は全て同 skill の手順に従う
-- `symphony-workflow` skill が利用できない環境では実装に入らない。Linear issue に blocker comment (何が missing か / unblock に必要な人間の action) を 1 件書き、issue を `Human Review` へ動かして shutdown する
-- 下の「本 repo 固有ルール」は skill の共通手順を上書きする
+- セッション起動直後に `symphony-workflow` スキルを呼ぶ。ステータスの振り分け / workpad 運用 / 実装 / レビュースイープ / `Human Review` 遷移 / マージまで、進行は全て同スキルの手順に従う
+- `symphony-workflow` スキルが利用できない環境では実装に入らない。Linear issue にブロッカーコメント (何が不足しているか / 解除に必要な人間の対応) を 1 件書き、issue を `Human Review` へ動かして終了する
+- 下の「本リポジトリ固有ルール」はスキルの共通手順を上書きする
 
-## 本 repo 固有ルール
+## 本リポジトリ固有ルール
 
-なし。skill の共通手順に従う。
+なし。スキルの共通手順に従う。
 
 ## スコープ外
 
