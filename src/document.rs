@@ -265,6 +265,21 @@ fn collect_link_url_ranges<'a>(
             continue;
         }
         let pos = data.sourcepos;
+
+        // comrak の GFM autolink extension は bare autolink の Link node に
+        // line=0 の無効な sourcepos を付ける。その場合は URL 文字列を segment
+        // text 内で検索して範囲を推定する。
+        if pos.start.line == 0 {
+            if let NodeValue::Link(link) = &data.value {
+                let url = &link.url;
+                let seg_text = &source[seg_start..seg_start + seg_len];
+                if let Some(idx) = seg_text.find(url.as_str()) {
+                    out.push((idx, idx + url.len()));
+                }
+            }
+            continue;
+        }
+
         let abs_start = byte_offset_start(source, line_starts, pos.start.line, pos.start.column);
         let abs_end = byte_offset_end_exclusive(source, line_starts, pos.end.line, pos.end.column);
         if abs_end <= abs_start || abs_start < seg_start {
@@ -468,5 +483,15 @@ mod tests {
     #[test]
     fn extract_url_range_empty_returns_none() {
         assert_eq!(extract_url_range(""), None);
+    }
+
+    #[test]
+    fn bare_autolink_populates_link_url_ranges() {
+        let doc = Document::parse("See https://example.com/worker for details.");
+        assert_eq!(doc.segments.len(), 1);
+        let seg = &doc.segments[0];
+        assert_eq!(seg.link_url_ranges.len(), 1);
+        let (s, e) = seg.link_url_ranges[0];
+        assert_eq!(&seg.text[s..e], "https://example.com/worker");
     }
 }
