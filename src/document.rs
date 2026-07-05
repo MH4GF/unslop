@@ -266,15 +266,26 @@ fn collect_link_url_ranges<'a>(
         }
         let pos = data.sourcepos;
 
-        // comrak の GFM autolink extension は bare autolink の Link node に
-        // line=0 の無効な sourcepos を付ける。その場合は URL 文字列を segment
-        // text 内で検索して範囲を推定する。
+        // comrak の GFM autolink extension は bare autolink の Link/Image node に
+        // line=0 の無効な sourcepos を付ける。URL 文字列を segment text 内で検索し、
+        // 既収集の範囲と重ならない出現位置を採用する。
         if pos.start.line == 0 {
-            if let NodeValue::Link(link) = &data.value {
-                let url = &link.url;
+            let url = match &data.value {
+                NodeValue::Link(link) => Some(link.url.as_str()),
+                NodeValue::Image(img) => Some(img.url.as_str()),
+                _ => None,
+            };
+            if let Some(url) = url {
                 let seg_text = &source[seg_start..seg_start + seg_len];
-                if let Some(idx) = seg_text.find(url.as_str()) {
-                    out.push((idx, idx + url.len()));
+                let mut search_from = 0;
+                while let Some(idx) = seg_text[search_from..].find(url) {
+                    let idx = search_from + idx;
+                    let overlaps = out.iter().any(|&(s, e)| idx < e && s < idx + url.len());
+                    if !overlaps {
+                        out.push((idx, idx + url.len()));
+                        break;
+                    }
+                    search_from = idx + 1;
                 }
             }
             continue;
@@ -493,5 +504,19 @@ mod tests {
         assert_eq!(seg.link_url_ranges.len(), 1);
         let (s, e) = seg.link_url_ranges[0];
         assert_eq!(&seg.text[s..e], "https://example.com/worker");
+    }
+
+    #[test]
+    fn bare_autolink_after_same_markdown_link_gets_distinct_range() {
+        let src = "[link](https://example.com/worker) and https://example.com/worker";
+        let doc = Document::parse(src);
+        assert_eq!(doc.segments.len(), 1);
+        let seg = &doc.segments[0];
+        assert_eq!(seg.link_url_ranges.len(), 2);
+        let (s0, e0) = seg.link_url_ranges[0];
+        let (s1, e1) = seg.link_url_ranges[1];
+        assert_ne!(s0, s1, "ranges must be distinct positions");
+        assert_eq!(&seg.text[s0..e0], "https://example.com/worker");
+        assert_eq!(&seg.text[s1..e1], "https://example.com/worker");
     }
 }

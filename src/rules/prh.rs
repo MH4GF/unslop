@@ -137,9 +137,13 @@ impl Rule for Prh {
                     let e = m.end();
                     let in_code_span = seg.code_ranges.iter().any(|&(cs, ce)| s < ce && cs < e);
                     let in_link_url = seg.link_url_ranges.iter().any(|&(cs, ce)| s < ce && cs < e);
+                    if in_code_span || in_link_url {
+                        from = e.max(s + 1);
+                        continue;
+                    }
                     let actual = m.as_str().to_string();
                     let merged = case_merge(&actual, &rule.expected, rule.expected_is_ascii);
-                    if !in_code_span && !in_link_url && actual != merged {
+                    if actual != merged {
                         let (line, column) = doc.pos_at(seg, s);
                         let abs_start = seg.start_byte + s;
                         let abs_end = seg.start_byte + e;
@@ -263,6 +267,12 @@ mod tests {
         let got = messages("地の worker と [link](https://example.com/worker) を併記する。");
         assert_eq!(got.len(), 1, "got = {got:?}");
         assert_eq!(got[0].1, "worker => ワーカー");
+    }
+
+    #[test]
+    fn skips_bare_autolink_after_markdown_link_with_same_url() {
+        let src = "[link](https://example.com/worker) and https://example.com/worker";
+        assert!(messages(src).is_empty());
     }
 
     #[test]
