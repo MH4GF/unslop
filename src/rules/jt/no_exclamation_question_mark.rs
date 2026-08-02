@@ -36,10 +36,8 @@ impl Rule for NoExclamationQuestionMark {
                     let s = m.start();
                     let e = m.end();
                     let text = m.as_str().to_string();
-                    let in_code = seg.code_ranges.iter().any(|&(cs, ce)| s < ce && cs < e);
-                    let in_link_url = seg.link_url_ranges.iter().any(|&(cs, ce)| s < ce && cs < e);
                     let in_allow = ignored_ranges.iter().any(|(rs, re_)| *rs <= s && s <= *re_);
-                    if !in_code && !in_link_url && !in_allow {
+                    if !seg.in_excluded_range(s, e) && !in_allow {
                         let (line, column) = doc.pos_at(seg, s);
                         issues.push(Issue {
                             rule_id: RULE_ID.to_string(),

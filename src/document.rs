@@ -42,6 +42,19 @@ pub struct TextSegment {
     pub emphasis_ranges: Vec<(usize, usize)>,
 }
 
+impl TextSegment {
+    /// segment 相対 byte 範囲 `[start, end)` が code span または link URL に重なるかを返す。
+    pub fn in_excluded_range(&self, start: usize, end: usize) -> bool {
+        self.code_ranges
+            .iter()
+            .any(|&(cs, ce)| start < ce && cs < end)
+            || self
+                .link_url_ranges
+                .iter()
+                .any(|&(cs, ce)| start < ce && cs < end)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Document {
     pub source: String,
