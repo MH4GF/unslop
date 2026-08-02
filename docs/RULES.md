@@ -43,7 +43,7 @@ upstream: <https://github.com/textlint-ja/textlint-rule-preset-ai-writing>
 
 | rule | 実装 | auto-fix | simplified |
 |------|:----:|:--------:|:----------:|
-| prh | ✅ | ✅ | YAML の `version: 1` + `rules: [{ expected, pattern }]` 形式のみ。`$1` 置換と複数 YAML import は未対応。auto-fix は本家準拠で case merge (lower/upper/title) を行う |
+| prh | ✅ | ✅ | YAML の `version: 1` + `rules: [{ expected, pattern }]` 形式のみ。`$1` 置換と複数 YAML import は未対応。auto-fix は本家準拠で case merge (lower/upper/title) を行う。本家 default に合わせ Link / BlockQuote / Emphasis 配下はスキップ (`checkLink: false` / `checkBlockQuote: false` / `checkEmphasis: false` 相当の固定挙動)。`\b` は JS 互換の ASCII 単語境界として扱う (日本語隣接の英単語を検出する)。識別子境界: マッチ前後が `-` / `_` の場合は検出を抑止する (本家にない安全策) |
 
 ## unslop-original (textlint 非対応)
 
