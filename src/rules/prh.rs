@@ -179,8 +179,7 @@ impl Rule for Prh {
                 while let Ok(Some(m)) = rule.re.find_from_pos(&seg.text, from) {
                     let s = m.start();
                     let e = m.end();
-                    let in_excluded = seg.code_ranges.iter().any(|&(cs, ce)| s < ce && cs < e)
-                        || seg.link_url_ranges.iter().any(|&(cs, ce)| s < ce && cs < e)
+                    let in_excluded = seg.in_excluded_range(s, e)
                         || seg
                             .link_node_ranges
                             .iter()

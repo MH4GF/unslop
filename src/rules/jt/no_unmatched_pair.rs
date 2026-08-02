@@ -100,11 +100,7 @@ impl Rule for NoUnmatchedPair {
                 for c in s_text.chars() {
                     let char_start = s_start + i;
                     let char_end = char_start + c.len_utf8();
-                    let in_code = seg
-                        .code_ranges
-                        .iter()
-                        .any(|&(cs, ce)| char_start < ce && cs < char_end);
-                    if in_code {
+                    if seg.in_excluded_range(char_start, char_end) {
                         i += c.len_utf8();
                         continue;
                     }

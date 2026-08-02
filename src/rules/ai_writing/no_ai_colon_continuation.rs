@@ -59,11 +59,7 @@ impl Rule for NoAiColonContinuation {
                 None => continue,
             };
             let colon_end = colon_byte + colon_char.len();
-            let in_code = seg
-                .code_ranges
-                .iter()
-                .any(|&(cs, ce)| colon_byte < ce && cs < colon_end);
-            if in_code {
+            if seg.in_excluded_range(colon_byte, colon_end) {
                 continue;
             }
             let (line, column) = doc.pos_at(seg, colon_byte);

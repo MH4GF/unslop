@@ -45,8 +45,7 @@ impl Rule for NoAiListFormatting {
                 let full = m.get(0).unwrap();
                 let s = full.start();
                 let e = full.end();
-                let in_code = seg.code_ranges.iter().any(|&(cs, ce)| s < ce && cs < e);
-                if !in_code {
+                if !seg.in_excluded_range(s, e) {
                     let sep = m.get(2).map(|x| x.as_str()).unwrap_or("");
                     let sep_name = match sep {
                         "-" => "ハイフン",
@@ -72,8 +71,7 @@ impl Rule for NoAiListFormatting {
                 let emoji = m.as_str();
                 let s = m.start();
                 let e = m.end();
-                let in_code = seg.code_ranges.iter().any(|&(cs, ce)| s < ce && cs < e);
-                if !in_code {
+                if !seg.in_excluded_range(s, e) {
                     let (line, column) = doc.pos_at(seg, s);
                     issues.push(Issue {
                         rule_id: RULE_ID.to_string(),

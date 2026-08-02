@@ -39,18 +39,7 @@ impl Rule for JaNoSuccessiveWord {
                 if is_onomatopoeia(&prev.surface) && is_onomatopoeia(&curr.surface) {
                     continue;
                 }
-                // code_ranges / link_url_ranges 内のトークンは対象外。
-                let span_start = curr.byte_start;
-                let span_end = curr.byte_end;
-                if seg
-                    .code_ranges
-                    .iter()
-                    .any(|&(s, e)| span_start < e && s < span_end)
-                    || seg
-                        .link_url_ranges
-                        .iter()
-                        .any(|&(s, e)| span_start < e && s < span_end)
-                {
+                if seg.in_excluded_range(curr.byte_start, curr.byte_end) {
                     continue;
                 }
                 let (line, column) = doc.pos_at(seg, curr.byte_start);

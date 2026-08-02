@@ -17,7 +17,7 @@
 use fancy_regex::Regex;
 use once_cell::sync::Lazy;
 
-use crate::document::{Document, SegmentKind, TextSegment};
+use crate::document::{Document, SegmentKind};
 use crate::rule::{Fix, Issue, Rule, Severity};
 
 const RULE_ID: &str = "ja-no-redundant-expression";
@@ -112,7 +112,7 @@ impl Rule for JaNoRedundantExpression {
                     let s = m.start();
                     let e = m.end();
                     from = e.max(s + 1);
-                    if range_in_excluded(seg, s, e) {
+                    if seg.in_excluded_range(s, e) {
                         continue;
                     }
                     let (line, column) = doc.pos_at(seg, s);
@@ -137,11 +137,6 @@ impl Rule for JaNoRedundantExpression {
         }
         issues
     }
-}
-
-fn range_in_excluded(seg: &TextSegment, s: usize, e: usize) -> bool {
-    seg.code_ranges.iter().any(|&(cs, ce)| s < ce && cs < e)
-        || seg.link_url_ranges.iter().any(|&(cs, ce)| s < ce && cs < e)
 }
 
 #[cfg(test)]
