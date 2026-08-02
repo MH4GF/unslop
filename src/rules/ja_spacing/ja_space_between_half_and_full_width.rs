@@ -15,7 +15,7 @@ use crate::document::Document;
 use crate::rule::{Fix, Issue, Rule, Severity};
 use crate::rules::is_str_bearing;
 
-use super::{is_full_width, is_half_width_alnum, is_zen_punctuation, range_in_excluded};
+use super::{is_full_width, is_half_width_alnum, is_zen_punctuation};
 
 const RULE_ID: &str = "ja-space-between-half-and-full-width";
 const MESSAGE: &str = "原則として、全角文字と半角文字の間にスペースを入れます。";
@@ -52,7 +52,7 @@ impl Rule for JaSpaceBetweenHalfAndFullWidth {
                 if is_zen_punctuation(zen_side) {
                     continue;
                 }
-                if range_in_excluded(seg, l_byte, r_byte + right.len_utf8()) {
+                if seg.in_excluded_range(l_byte, r_byte + right.len_utf8()) {
                     continue;
                 }
                 let (line, column) = doc.pos_at(seg, l_byte);

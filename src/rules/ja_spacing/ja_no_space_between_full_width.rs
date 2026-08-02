@@ -9,7 +9,7 @@ use crate::document::Document;
 use crate::rule::{Fix, Issue, Rule, Severity};
 use crate::rules::is_str_bearing;
 
-use super::{is_full_width, is_katakana_in_compound, range_in_excluded};
+use super::{is_full_width, is_katakana_in_compound};
 
 const RULE_ID: &str = "ja-no-space-between-full-width";
 const MESSAGE: &str = "原則として、全角文字どうしの間にスペースを入れません。";
@@ -44,7 +44,7 @@ impl Rule for JaNoSpaceBetweenFullWidth {
                 if is_katakana_in_compound(prev) && is_katakana_in_compound(next) {
                     continue;
                 }
-                if range_in_excluded(seg, sp_byte, sp_byte + 1) {
+                if seg.in_excluded_range(sp_byte, sp_byte + 1) {
                     continue;
                 }
                 let (line, column) = doc.pos_at(seg, sp_byte);

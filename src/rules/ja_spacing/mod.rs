@@ -34,8 +34,3 @@ pub(crate) fn is_half_width_alnum(c: char) -> bool {
 pub(crate) fn is_zen_punctuation(c: char) -> bool {
     matches!(c, '、' | '。')
 }
-
-/// segment 相対 byte 範囲 `[s, e)` が code span / link URL に重なるかを返す。
-pub(crate) fn range_in_excluded(seg: &crate::document::TextSegment, s: usize, e: usize) -> bool {
-    seg.in_excluded_range(s, e)
-}
