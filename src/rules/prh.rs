@@ -59,6 +59,46 @@ impl Prh {
     }
 }
 
+/// `\b` を JS 互換の ASCII 単語境界 lookaround に書き換える。
+/// fancy_regex は `(?-u:\b)` を拒否するため、lookaround でエミュレーションする。
+/// 文字クラス内 `[...]` の `\b` (backspace) とエスケープ済み `\\b` は書き換えない。
+const ASCII_WORD_BOUNDARY: &str =
+    "(?:(?<=[A-Za-z0-9_])(?![A-Za-z0-9_])|(?<![A-Za-z0-9_])(?=[A-Za-z0-9_]))";
+
+fn replace_word_boundaries(body: &str) -> String {
+    let mut out = String::with_capacity(body.len());
+    let bytes = body.as_bytes();
+    let len = bytes.len();
+    let mut i = 0;
+    let mut in_char_class = false;
+    while i < len {
+        if bytes[i] == b'\\' && i + 1 < len {
+            if bytes[i + 1] == b'\\' {
+                out.push_str("\\\\");
+                i += 2;
+                continue;
+            }
+            if bytes[i + 1] == b'b' && !in_char_class {
+                out.push_str(ASCII_WORD_BOUNDARY);
+                i += 2;
+                continue;
+            }
+            out.push(bytes[i] as char);
+            out.push(bytes[i + 1] as char);
+            i += 2;
+            continue;
+        }
+        if bytes[i] == b'[' && !in_char_class {
+            in_char_class = true;
+        } else if bytes[i] == b']' && in_char_class {
+            in_char_class = false;
+        }
+        out.push(bytes[i] as char);
+        i += 1;
+    }
+    out
+}
+
 fn compile_pattern(src: &str) -> anyhow::Result<Regex> {
     let (body, flags) = if src.starts_with('/') {
         if let Some(last) = src.rfind('/') {
@@ -74,6 +114,7 @@ fn compile_pattern(src: &str) -> anyhow::Result<Regex> {
         (src, "")
     };
     let prefix = if flags.contains('i') { "(?i)" } else { "" };
+    let body = replace_word_boundaries(body);
     Ok(Regex::new(&format!("{prefix}{body}"))?)
 }
 
@@ -130,14 +171,32 @@ impl Rule for Prh {
             if !is_str_bearing(seg.kind) {
                 continue;
             }
+            if seg.in_block_quote {
+                continue;
+            }
             for rule in &self.rules {
                 let mut from = 0usize;
                 while let Ok(Some(m)) = rule.re.find_from_pos(&seg.text, from) {
                     let s = m.start();
                     let e = m.end();
-                    let in_code_span = seg.code_ranges.iter().any(|&(cs, ce)| s < ce && cs < e);
-                    let in_link_url = seg.link_url_ranges.iter().any(|&(cs, ce)| s < ce && cs < e);
-                    if in_code_span || in_link_url {
+                    let in_excluded = seg.code_ranges.iter().any(|&(cs, ce)| s < ce && cs < e)
+                        || seg.link_url_ranges.iter().any(|&(cs, ce)| s < ce && cs < e)
+                        || seg
+                            .link_node_ranges
+                            .iter()
+                            .any(|&(cs, ce)| s < ce && cs < e)
+                        || seg.emphasis_ranges.iter().any(|&(cs, ce)| s < ce && cs < e);
+                    if in_excluded {
+                        from = e.max(s + 1);
+                        continue;
+                    }
+                    let before = if s > 0 {
+                        seg.text.as_bytes().get(s - 1).copied()
+                    } else {
+                        None
+                    };
+                    let after = seg.text.as_bytes().get(e).copied();
+                    if matches!(before, Some(b'-' | b'_')) || matches!(after, Some(b'-' | b'_')) {
                         from = e.max(s + 1);
                         continue;
                     }
@@ -174,24 +233,26 @@ mod tests {
     use super::*;
     use crate::document::Document;
 
-    /// `worker` → ワーカー の単一ルールを持つ Prh を組む。
+    /// `worker` → ワーカー の単一ルールを持つ Prh を compile_pattern 経由で組む。
     fn prh_worker() -> Prh {
+        let re = compile_pattern(r"/\bworker\b/i").unwrap();
         Prh {
             rules: vec![CompiledRule {
                 expected: "ワーカー".to_string(),
                 expected_is_ascii: false,
-                re: Regex::new(r"\bworker\b").unwrap(),
+                re,
             }],
         }
     }
 
     /// ASCII 同士の case merge を試す `worker` → `process` (i フラグ)。
     fn prh_ascii_process() -> Prh {
+        let re = compile_pattern(r"/\bworker\b/i").unwrap();
         Prh {
             rules: vec![CompiledRule {
                 expected: "process".to_string(),
                 expected_is_ascii: true,
-                re: Regex::new(r"(?i)\bworker\b").unwrap(),
+                re,
             }],
         }
     }
@@ -329,5 +390,96 @@ mod tests {
         let doc = Document::parse("the process now.");
         let issues = prh_ascii_process().check(&doc);
         assert!(issues.is_empty());
+    }
+
+    // --- (A) Link / BlockQuote / Emphasis exclusion ---
+
+    #[test]
+    fn skips_link_label() {
+        assert!(messages("[worker guide](https://example.test/x) を読む。").is_empty());
+    }
+
+    #[test]
+    fn skips_block_quote() {
+        assert!(messages("> worker は retry する。").is_empty());
+    }
+
+    #[test]
+    fn skips_strong_emphasis() {
+        assert!(messages("**worker** を強調する。").is_empty());
+    }
+
+    #[test]
+    fn skips_emphasis() {
+        assert!(messages("*worker* を強調する。").is_empty());
+    }
+
+    // --- (B) Identifier boundary ---
+
+    #[test]
+    fn skips_hyphenated_identifier() {
+        assert!(messages("background-worker は識別子。").is_empty());
+    }
+
+    #[test]
+    fn skips_hyphenated_identifier_with_pattern_containing_hyphen() {
+        let re = compile_pattern(r"/\bmop-up\b/i").unwrap();
+        let prh = Prh {
+            rules: vec![CompiledRule {
+                expected: "掃き出し処理".to_string(),
+                expected_is_ascii: false,
+                re,
+            }],
+        };
+        let doc = Document::parse("mop-up-retry は識別子。");
+        let issues = prh.check(&doc);
+        assert!(issues.is_empty());
+    }
+
+    #[test]
+    fn skips_underscored_identifier() {
+        assert!(messages("my_worker は識別子。").is_empty());
+    }
+
+    // --- (C) ASCII word boundary ---
+
+    #[test]
+    fn detects_adjacent_to_japanese() {
+        let got = messages("ワーカーworker という並び。");
+        assert_eq!(got.len(), 1);
+        assert_eq!(got[0].1, "worker => ワーカー");
+    }
+
+    #[test]
+    fn detects_plain_text_still_works() {
+        let got = messages("worker の設定。");
+        assert_eq!(got.len(), 1);
+        assert_eq!(got[0].1, "worker => ワーカー");
+    }
+
+    #[test]
+    fn no_partial_match_workers() {
+        assert!(messages("workers を使う。").is_empty());
+    }
+
+    // --- replace_word_boundaries ---
+
+    #[test]
+    fn boundary_replacement_basic() {
+        let result = replace_word_boundaries(r"\bfoo\b");
+        assert!(result.contains("(?:"));
+        assert!(!result.contains(r"\b"));
+    }
+
+    #[test]
+    fn boundary_replacement_skips_escaped_backslash() {
+        let result = replace_word_boundaries(r"\\b");
+        assert_eq!(result, r"\\b");
+    }
+
+    #[test]
+    fn boundary_replacement_skips_char_class() {
+        let result = replace_word_boundaries(r"[\b]");
+        assert_eq!(result, r"[\b]");
     }
 }

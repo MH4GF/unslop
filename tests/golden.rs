@@ -148,6 +148,13 @@ fn ja_spacing_basics() {
     assert_coverage("ja-spacing-basics", 6, 0);
 }
 
+#[test]
+fn prh_exclusions() {
+    // prh の Link/BlockQuote/Emphasis 除外・識別子境界・ASCII 単語境界を検証する fixture。
+    // textlint-only: L11 prh (identifier boundary), L13 ja-spacing (ー が is_full_width 外)。
+    assert_coverage("prh-exclusions", 3, 0);
+}
+
 const FIXABLE_RULES: &[&str] = &[
     "prh",
     "no-zero-width-spaces",

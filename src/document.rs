@@ -36,6 +36,12 @@ pub struct TextSegment {
     /// `[label](url)` の URL や `<url>` autolink、GFM bare autolink を含む。
     /// URL 内の `?` を textlint と同様に lint 対象外にするための除外範囲。
     pub link_url_ranges: Vec<(usize, usize)>,
+    /// segment 内 Link/Image node 全体の byte 範囲 (segment 相対)。
+    /// prh が本家 textlint-rule-prh の `checkLink: false` 既定を再現するために使う。
+    pub link_node_ranges: Vec<(usize, usize)>,
+    /// segment 内 Emph/Strong node 全体の byte 範囲 (segment 相対)。
+    /// prh が本家の `checkEmphasis: false` 既定を再現するために使う。
+    pub emphasis_ranges: Vec<(usize, usize)>,
 }
 
 #[derive(Debug, Clone)]
@@ -205,6 +211,24 @@ fn push_segment<'a>(
             text.len(),
             &mut link_url_ranges,
         );
+        let mut link_node_ranges = Vec::new();
+        collect_link_node_ranges(
+            node,
+            source,
+            line_starts,
+            start_byte,
+            text.len(),
+            &mut link_node_ranges,
+        );
+        let mut emphasis_ranges = Vec::new();
+        collect_emphasis_ranges(
+            node,
+            source,
+            line_starts,
+            start_byte,
+            text.len(),
+            &mut emphasis_ranges,
+        );
         out.push(TextSegment {
             text,
             start_byte,
@@ -214,6 +238,8 @@ fn push_segment<'a>(
             in_block_quote,
             code_ranges,
             link_url_ranges,
+            link_node_ranges,
+            emphasis_ranges,
         });
     }
 }
@@ -309,6 +335,88 @@ fn collect_link_url_ranges<'a>(
         };
         let rel_start = (abs_start + us).saturating_sub(seg_start);
         let rel_end = ((abs_start + ue).saturating_sub(seg_start)).min(seg_len);
+        if rel_start < rel_end {
+            out.push((rel_start, rel_end));
+        }
+    }
+}
+
+/// block ノード配下の `Link` / `Image` ノード全体の segment 相対 byte 範囲を返す。
+/// prh が本家 `checkLink: false` 既定を再現するために、ラベル・URL 含めた構文全体を除外する。
+fn collect_link_node_ranges<'a>(
+    node: &'a AstNode<'a>,
+    source: &str,
+    line_starts: &[usize],
+    seg_start: usize,
+    seg_len: usize,
+    out: &mut Vec<(usize, usize)>,
+) {
+    for descendant in node.descendants() {
+        let data = descendant.data.borrow();
+        if !matches!(data.value, NodeValue::Link(_) | NodeValue::Image(_)) {
+            continue;
+        }
+        let pos = data.sourcepos;
+        if pos.start.line == 0 {
+            let url = match &data.value {
+                NodeValue::Link(link) => Some(link.url.as_str()),
+                NodeValue::Image(img) => Some(img.url.as_str()),
+                _ => None,
+            };
+            if let Some(url) = url {
+                let seg_text = &source[seg_start..seg_start + seg_len];
+                let mut search_from = 0;
+                while let Some(idx) = seg_text[search_from..].find(url) {
+                    let idx = search_from + idx;
+                    let overlaps = out.iter().any(|&(s, e)| idx < e && s < idx + url.len());
+                    if !overlaps {
+                        out.push((idx, idx + url.len()));
+                        break;
+                    }
+                    search_from = idx + 1;
+                }
+            }
+            continue;
+        }
+        let abs_start = byte_offset_start(source, line_starts, pos.start.line, pos.start.column);
+        let abs_end = byte_offset_end_exclusive(source, line_starts, pos.end.line, pos.end.column);
+        if abs_end <= abs_start || abs_start < seg_start {
+            continue;
+        }
+        let rel_start = abs_start.saturating_sub(seg_start);
+        let rel_end = (abs_end.saturating_sub(seg_start)).min(seg_len);
+        if rel_start < rel_end {
+            out.push((rel_start, rel_end));
+        }
+    }
+}
+
+/// block ノード配下の `Emph` / `Strong` ノード全体の segment 相対 byte 範囲を返す。
+/// prh が本家 `checkEmphasis: false` 既定を再現するために使う。
+fn collect_emphasis_ranges<'a>(
+    node: &'a AstNode<'a>,
+    source: &str,
+    line_starts: &[usize],
+    seg_start: usize,
+    seg_len: usize,
+    out: &mut Vec<(usize, usize)>,
+) {
+    for descendant in node.descendants() {
+        let data = descendant.data.borrow();
+        if !matches!(data.value, NodeValue::Emph | NodeValue::Strong) {
+            continue;
+        }
+        let pos = data.sourcepos;
+        if pos.start.line == 0 {
+            continue;
+        }
+        let abs_start = byte_offset_start(source, line_starts, pos.start.line, pos.start.column);
+        let abs_end = byte_offset_end_exclusive(source, line_starts, pos.end.line, pos.end.column);
+        if abs_end <= abs_start || abs_start < seg_start {
+            continue;
+        }
+        let rel_start = abs_start.saturating_sub(seg_start);
+        let rel_end = (abs_end.saturating_sub(seg_start)).min(seg_len);
         if rel_start < rel_end {
             out.push((rel_start, rel_end));
         }
