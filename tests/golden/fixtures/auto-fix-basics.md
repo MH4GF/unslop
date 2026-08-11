@@ -19,3 +19,11 @@ abusage: ファイルは書きずらいので注意。
 abusage 2: try で例外を補足する書き方を直す。
 
 ja-spacing: あれは ダメ で、JTF標準 と書く。
+
+list-nested-fence: 手順内の worker は地の文なので直す。
+
+1. worker を発行する
+
+   ```bash
+   echo worker
+   ```
