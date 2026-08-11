@@ -255,8 +255,11 @@ fn push_segment<'a>(
     }
 }
 
-/// block ノード配下の inline `Code` ノードを集め、segment 相対 byte 範囲に変換する。
+/// block ノード配下の inline `Code` ノードとネストした `CodeBlock` を集め、
+/// segment 相対 byte 範囲に変換する。
 /// emphasis 等にネストした code span も拾うため subtree 全体を走査する。
+/// `CodeBlock` はトップレベルでは segment 化されない (`collect` が return する) が、
+/// ListItem/BlockQuote 配下ではその segment に本文が含まれるため、ここで除外範囲にする。
 fn collect_code_ranges<'a>(
     node: &'a AstNode<'a>,
     source: &str,
@@ -267,7 +270,7 @@ fn collect_code_ranges<'a>(
 ) {
     for descendant in node.descendants() {
         let data = descendant.data.borrow();
-        if !matches!(data.value, NodeValue::Code(_)) {
+        if !matches!(data.value, NodeValue::Code(_) | NodeValue::CodeBlock(_)) {
             continue;
         }
         let pos = data.sourcepos;
@@ -614,6 +617,86 @@ mod tests {
         assert_eq!(seg.link_url_ranges.len(), 1);
         let (s, e) = seg.link_url_ranges[0];
         assert_eq!(&seg.text[s..e], "https://example.com/worker");
+    }
+
+    #[test]
+    fn list_item_nested_code_block_is_excluded() {
+        // 番号付きリストの手順内にネストした fence。code block 本文は除外され、
+        // 同じ ListItem segment 内の地の文はそのまま lint 対象。
+        let src = "1. worker を発行する\n\n   ```bash\n   echo worker\n   ```\n";
+        let doc = Document::parse(src);
+        let seg = doc
+            .segments
+            .iter()
+            .find(|s| s.kind == SegmentKind::ListItem)
+            .expect("list item segment");
+        let code_idx = seg.text.rfind("worker").unwrap();
+        assert!(
+            seg.in_excluded_range(code_idx, code_idx + "worker".len()),
+            "nested code block content must be excluded"
+        );
+        let prose_idx = seg.text.find("worker").unwrap();
+        assert!(
+            !seg.in_excluded_range(prose_idx, prose_idx + "worker".len()),
+            "list item prose must stay lintable"
+        );
+    }
+
+    #[test]
+    fn bullet_list_nested_code_block_is_excluded() {
+        // 箇条書き (`-`) 配下の fence。
+        let src = "- worker を発行する\n\n  ```bash\n  echo worker\n  ```\n";
+        let doc = Document::parse(src);
+        let seg = doc
+            .segments
+            .iter()
+            .find(|s| s.kind == SegmentKind::ListItem)
+            .expect("list item segment");
+        let code_idx = seg.text.rfind("worker").unwrap();
+        assert!(
+            seg.in_excluded_range(code_idx, code_idx + "worker".len()),
+            "nested code block content must be excluded"
+        );
+    }
+
+    #[test]
+    fn deeply_nested_list_code_block_is_excluded() {
+        // 入れ子リストの中の fence。
+        let src = "- 親\n  - worker を発行する\n\n    ```bash\n    echo worker\n    ```\n";
+        let doc = Document::parse(src);
+        let seg = doc
+            .segments
+            .iter()
+            .find(|s| s.kind == SegmentKind::ListItem && s.text.contains("echo worker"))
+            .expect("list item segment containing the code block");
+        let code_idx = seg.text.rfind("worker").unwrap();
+        assert!(
+            seg.in_excluded_range(code_idx, code_idx + "worker".len()),
+            "nested code block content must be excluded"
+        );
+    }
+
+    #[test]
+    fn inline_code_still_excluded() {
+        // 既存挙動: インラインコードは除外され続ける。
+        let doc = Document::parse("`worker` を使う");
+        let seg = &doc.segments[0];
+        let idx = seg.text.find("worker").unwrap();
+        assert!(seg.in_excluded_range(idx, idx + "worker".len()));
+    }
+
+    #[test]
+    fn top_level_code_block_is_not_a_segment() {
+        // 既存挙動: トップレベル fence は segment にならず、本文を含む segment も無い。
+        let doc = Document::parse("```bash\necho worker\n```\n");
+        assert!(doc.segments.iter().all(|s| !s.text.contains("echo worker")));
+    }
+
+    #[test]
+    fn standalone_indented_code_block_is_not_a_segment() {
+        // 既存挙動: 単独の 4 スペースインデントブロックは segment にならない。
+        let doc = Document::parse("段落\n\n    echo worker\n");
+        assert!(doc.segments.iter().all(|s| !s.text.contains("echo worker")));
     }
 
     #[test]
